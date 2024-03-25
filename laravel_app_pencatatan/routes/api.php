@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\api\AbsenController;
+use App\Http\Controllers\api\listdataController;
 use App\Http\Controllers\Api\AuthenticationController;
 use App\Http\Controllers\Api\JadwalController;
 use Illuminate\Http\Request;
@@ -30,6 +30,6 @@ Route::post('/register', [AuthenticationController::class, 'register']);
 Route::group(['middleware' => 'auth:sanctum'], function() {
     Route::apiResource('user', UserController::class);
     Route::apiResource('jadwal', JadwalController::class);
-    Route::apiResource('absen', AbsenController::class);
+    Route::apiResource('absen', ListdataController::class);
 });
 
