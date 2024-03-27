@@ -15,8 +15,6 @@ return new class extends Migration
     {
         Schema::create('jeniss', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('nama_mobil_id')->constrained();
-            
             $table->string('nama');
 
         });

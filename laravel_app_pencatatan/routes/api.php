@@ -29,7 +29,6 @@ Route::post('/register', [AuthenticationController::class, 'register']);
 
 Route::group(['middleware' => 'auth:sanctum'], function() {
     Route::apiResource('user', UserController::class);
-    Route::apiResource('jadwal', JadwalController::class);
-    Route::apiResource('absen', ListdataController::class);
+    Route::apiResource('listdata', ListdataController::class);
 });
 

@@ -15,8 +15,6 @@ return new class extends Migration
     {
         Schema::create('warnas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('warna_mobil_id')->constrained();
-            
             $table->string('nama');
 
         });

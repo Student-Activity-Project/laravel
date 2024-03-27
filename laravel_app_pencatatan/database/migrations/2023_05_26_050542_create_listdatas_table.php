@@ -15,16 +15,16 @@ return new class extends Migration
     {
         Schema::create('listdatas', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_mobil');
-            $table->string('transmisi');
+            $table->foreignId('id_nama_mobil')->constrained('jeniss');
+            $table->enum('transmisi', ['manual', 'matic']);
             $table->date('tanggal_beli');
             $table->string('tahun_mobil');
-            $table->string('warna_mobil');
+            $table->foreignId('id_warna_mobil')->constrained('warnas');
             $table->string('nomor_polisi');
             $table->integer('harga_jual');
             $table->string('catatan_perbaikan');
             $table->string('foto');
-
+            $table->enum('status', ['available', 'sold']);
             $table->timestamps();
         });
     }
