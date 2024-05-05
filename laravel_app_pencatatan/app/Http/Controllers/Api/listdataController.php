@@ -4,84 +4,95 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Listdata;
+use App\Models\Warna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
-class listdataController extends Controller
+class ListdataController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index()
+    public function index() //GET
     {
         $listdata = Listdata::all();
-        return response()->json(
-            ['status' => true, 'data' => $listdata]
-        );
-    }
+        $listmobil = [];
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
-    {
-        $validateData = $request->validate([
-            'nama_mobil'=> 'required|min:5|max:20',
-            'transmisi'=> 'required|min:5|max:20',
-            'tanggal_beli'=> 'required|min:5|max:20',
-            'tahun_mobil'=> 'required|min:5|max:20',
-            'warna_mobil'=> 'required|min:5|max:20',
-            'nomor_polisi'=> 'required|min:5|max:20',
-            'harga_jual'=> 'required|min:5|max:20',
-            'catatan_perbaikan'=> 'required|min:5|max:20',
-            'foto' => 'nullable|file|image|max:5000',
-        ]);
+        // Iterate through each data and update the photo URL
+        foreach ($listdata as $data) {
+            $fotoUrl = asset('storage/' . $data->foto); // Assuming 'foto' is the field storing photo paths
+            $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
+            $warna = Warna::find($data->id_warna_mobil)->nama;
 
-        //handle file upload
-        $ext = $request->foto->getClientOriginalExtension();
-        $nama_file = "foto-". time() . "." . $ext;
-        $path = $request->foto->storeAs("public", $nama_file);
-
-        $listdata = new Listdata();
-        $listdata->nama_mobil = $validateData['nama_mobil'];
-        $listdata->transmisi = $validateData['transmisi'];
-        $listdata->tanggal_beli = $validateData['tanggal_beli'];
-        $listdata->tahun_mobil = $validateData['tahun_mobil'];
-        $listdata->warna_mobil = $validateData['warna_mobil'];
-        $listdata->nomor_polisi = $validateData['nomor_polisi'];
-        $listdata->harga_jual = $validateData['harga_jual'];
-        $listdata->catatan_perbaikan = $validateData['catatan_perbaikan'];
-        $listdata->foto = $nama_file;
-        $listdata->save();
+            $listmobil[] = [
+                'nama_mobil' => $data->nama_mobil,
+                'merk' => $data->merk,
+                'transmisi' => $transmisi,
+                'tanggal_beli' => $data->tanggal_beli,
+                'tahun_mobil' => $data->tahun_mobil,
+                'id_warna_mobil' => $warna,
+                'nomor_polisi' => $data->nomor_polisi,
+                'harga_jual' => $data->harga_jual,
+                'catatan_perbaikan' => $data->catatan_perbaikan,
+                'foto' => $fotoUrl,
+            ];
+        }
 
         return response()->json([
             'status' => true,
-            'message' => 'Data Mobil berhasil disimpan',
-            'data' => $listdata,
+            'data' => $listmobil
         ]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
+    public function store(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'nama_mobil' => 'required',
+        'merk' => 'required',
+        'transmisi' => 'required',
+        'tanggal_beli' => 'required|date|date_format:Y-m-d',
+        'tahun_mobil' => 'required',
+        'id_warna_mobil' => 'required',
+        'nomor_polisi' => 'required',
+        'harga_jual' => 'required|numeric|min:0',
+        'catatan_perbaikan' => 'required',
+        'foto' => 'nullable|file|image|max:5000',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first(),
+        ]);
+    }
+
+    // Simpan file foto ke penyimpanan 'public'
+    $ext = $request->foto->getClientOriginalExtension();
+    $nama_file = "foto-" . time() . "." . $ext;
+    $path = $request->foto->storeAs('public', $nama_file);
+
+
+    // Buat entri baru dalam database
+    $listdata = new Listdata();
+    $listdata->fill($request->all());
+    $listdata->foto = $nama_file; // Gunakan URL lengkap foto
+    $listdata->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Data Mobil berhasil disimpan',
+        'data' => $listdata,
+    ]);
+}
+
     public function show($id)
     {
-        $listdata = Listdata::findOrFail($id);
-        if($listdata){
+        try {
+            $listdata = Listdata::findOrFail($id);
             return response()->json([
                 'status' => true,
                 'message' => 'Data Mobil ditemukan',
                 'data' => $listdata,
             ]);
-        }else{
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Data Mobil tidak ditemukan',
@@ -89,52 +100,41 @@ class listdataController extends Controller
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function update(Request $request, $id)
     {
         $listdata = Listdata::findOrFail($id);
-        $validateData = $request->validate([
-            'nama_mobil'=> 'required|min:5|max:20',
-            'transmisi'=> 'required|min:5|max:20',
-            'tanggal_beli'=> 'required|min:5|max:20',
-            'tahun_mobil'=> 'required|min:5|max:20',
-            'warna_mobil'=> 'required|min:5|max:20',
-            'nomor_polisi'=> 'required|min:5|max:20',
-            'harga_jual'=> 'required|min:5|max:20',
-            'catatan_perbaikan'=> 'required|min:5|max:20',
+
+        $validator = Validator::make($request->all(), [
+            'nama_mobil' => 'required',
+            'merk' => 'required',
+            'transmisi' => 'required',
+            'tanggal_beli' => 'required|date|date_format:Y-m-d',
+            'tahun_mobil' => 'required',
+            'id_warna_mobil' => 'required',
+            'nomor_polisi' => 'required',
+            'harga_jual' => 'required|numeric|min:0',
+            'catatan_perbaikan' => 'required',
             'foto' => 'nullable|file|image|max:5000',
         ]);
 
-        $nama_file = $listdata->foto;
-        if($request->foto){
-            // get extensst->foto->getClientOriginalExtension();
-            $ext = $request->foto->getClientOriginalExtension();
-            $nama_file = "foto-". time() .".". $ext; //foto img1 di /storage/public
-            $path = $request->foto->storeAs("public", $nama_file);
-
-            //Hapus file lama
-            Storage::delete('public/' .$listdata->foto);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+            ]);
         }
 
-        Listdata::where('id', $listdata->id)
-        ->update([
-            'nama_mobil' => $validateData['nama_mobil'],
-            'transmisi' => $validateData['transmisi'],
-            'tanggal_beli' => $validateData['tanggal_beli'],
-            'tahun_mobil' => $validateData['tahun_mobil'],
-            'warna_mobil' => $validateData['warna_mobil'],
-            'nomor_polisi' => $validateData['nomor_polisi'],
-            'harga_jual' => $validateData['harga_jual'],
-            'catatan_perbaikan' => $validateData['catatan_perbaikan'],
-            'foto' => $nama_file,
-        ]);
+        $nama_file = $listdata->foto;
+        if ($request->hasFile('foto')) {
+            $ext = $request->foto->getClientOriginalExtension();
+            $nama_file = "foto-" . time() . "." . $ext;
+            $path = $request->foto->storeAs("public", $nama_file);
+            Storage::delete('public/' . $listdata->foto);
+        }
 
+        $listdata->fill($request->all());
+        $listdata->foto = $nama_file;
+        $listdata->save();
 
         return response()->json([
             'status' => true,
@@ -144,12 +144,6 @@ class listdataController extends Controller
 
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function destroy($id)
     {
         $listdata = Listdata::findOrFail($id);
