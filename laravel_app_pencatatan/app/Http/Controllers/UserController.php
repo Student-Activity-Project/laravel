@@ -33,31 +33,33 @@ class UserController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        // $validated = $request->validate([
-        //     'email' => 'email|required',
-        //     'username' => 'string|required',
-        //     'password' => 'required|min:8',
-        // ]);
+{
+    $validated = $request->validate([
+        'username' => 'string|required',
+        'password' => 'required|min:8',
+    ]);
 
-        // $insert = User::create($validated);
-        // if($insert) {
-        //     return response()->json(
-        //         [
-        //             'kode' => 1,
-        //             'pesan' => "Sukses Menyimpan Data",
-        //             'token' => $insert->createToken('registrasi')->plainTextToken,
-        //         ]
-        //     );
-        // }else{
-        //     return response()->json(
-        //         [
-        //             'kode' => 0,
-        //             'pesan' => "Gagal Menyimpan Data",
-        //         ]
-        //     );
-        // }
+    // Enkripsi kata sandi sebelum menyimpannya
+    $validated['password'] = bcrypt($validated['password']);
+
+    $insert = User::create($validated);
+    if($insert) {
+        return response()->json(
+            [
+                'kode' => 1,
+                'pesan' => "Sukses Menyimpan Data",
+                'token' => $insert->createToken('password')->plainTextToken,
+            ]
+        );
+    } else {
+        return response()->json(
+            [
+                'kode' => 0,
+                'pesan' => "Gagal Menyimpan Data",
+            ]
+        );
     }
+}
 
 
     /**

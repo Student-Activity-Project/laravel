@@ -14,14 +14,12 @@ class AuthenticationController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class],
             'username' => ['required', 'string', 'max:255'],
             'password' => ['required', Password::defaults()],
             'device_name' => 'required',
         ]);
 
         $user = User::create([
-            'email' => $request->email,
             'username' => $request->username,
             'password' => Hash::make($request->password),
         ]);
@@ -47,12 +45,12 @@ class AuthenticationController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required',
+            'username' => 'required',
             'password' => 'required',
             'device_name' => 'required', //untuk menentukan nama token
         ]);
         //proses cek user untuk login
-        $user = User::where("email", $request->email)->first();
+        $user = User::where("username", $request->username)->first();
         if(!$user || !Hash::check($request->password, $user->password)){
             return response()->json(
                 [

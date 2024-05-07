@@ -5,6 +5,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Listdata;
 use App\Models\Warna;
+use App\Models\Jenis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -21,11 +22,11 @@ class ListdataController extends Controller
             $fotoUrl = asset('storage/' . $data->foto); // Assuming 'foto' is the field storing photo paths
             $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
             $warna = Warna::find($data->id_warna_mobil)->nama;
-
+            $merk = Jenis::find($data->id_jenis_mobil)->nama;
             $listmobil[] = [
                 'nama_mobil' => $data->nama_mobil,
-                'merk' => $data->merk,
                 'transmisi' => $transmisi,
+                'id_jenis_mobil' => $merk,
                 'tanggal_beli' => $data->tanggal_beli,
                 'tahun_mobil' => $data->tahun_mobil,
                 'id_warna_mobil' => $warna,
@@ -46,8 +47,8 @@ class ListdataController extends Controller
 {
     $validator = Validator::make($request->all(), [
         'nama_mobil' => 'required',
-        'merk' => 'required',
         'transmisi' => 'required',
+        'id_jenis_mobil' => 'required',
         'tanggal_beli' => 'required|date|date_format:Y-m-d',
         'tahun_mobil' => 'required',
         'id_warna_mobil' => 'required',
@@ -106,8 +107,8 @@ class ListdataController extends Controller
 
         $validator = Validator::make($request->all(), [
             'nama_mobil' => 'required',
-            'merk' => 'required',
             'transmisi' => 'required',
+            'id_jenis_mobil' => 'required',
             'tanggal_beli' => 'required|date|date_format:Y-m-d',
             'tahun_mobil' => 'required',
             'id_warna_mobil' => 'required',
