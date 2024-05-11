@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\api\ListdataController;
 use App\Http\Controllers\api\TransaksiController;
+use App\Http\Controllers\api\StatistikController;
 use App\Http\Controllers\Api\AuthenticationController;
 use App\Http\Controllers\Api\JadwalController;
 use Illuminate\Http\Request;
@@ -12,7 +13,6 @@ Route::post('/login', [AuthenticationController::class, 'login']);
 Route::post('/register', [AuthenticationController::class, 'register']);
 
 
-
 Route::group(['middleware' => 'auth:sanctum'], function() {
 });
 
@@ -20,4 +20,6 @@ Route::apiResource('user', UserController::class);
 Route::apiResource('listdata', ListdataController::class);
 Route::apiResource('transaksi', TransaksiController::class);
 
-Route::post('listdata/{id}/sold', [ListDataController::class, 'markAsSold']);
+Route::put('listdata/{id}/status', [ListdataController::class, 'updateStatus']);
+Route::get('listdata/{status}', 'ListDataController@index');
+Route::get('total-unit-terjual', [StatistikController::class, 'totalUnitTerjual']);

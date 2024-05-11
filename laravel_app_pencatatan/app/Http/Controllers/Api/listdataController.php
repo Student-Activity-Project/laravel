@@ -13,9 +13,17 @@ use Illuminate\Support\Facades\Validator;
 
 class ListdataController extends Controller
 {
-    public function index() //GET
+    public function index($status)
     {
-        $listdata = Listdata::all();
+        // Validasi status
+        if (!in_array($status, ['sold', 'available'])) {
+            // Jika status tidak valid, kembalikan pesan error
+            return response()->json(['error' => 'Invalid status'], 400);
+        }
+
+        // Ambil data mobil berdasarkan status
+        $listdata = Listdata::where('status', $status)->get();
+
         $listmobil = [];
 
         // Iterate through each data and update the photo URL
@@ -24,6 +32,7 @@ class ListdataController extends Controller
             $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
             $warna = Warna::find($data->id_warna_mobil)->nama;
             $merk = Jenis::find($data->id_jenis_mobil)->nama;
+
             $listmobil[] = [
                 'id' => $data->id,
                 'nama_mobil' => $data->nama_mobil,
@@ -36,17 +45,17 @@ class ListdataController extends Controller
                 'harga_jual' => $data->harga_jual,
                 'catatan_perbaikan' => $data->catatan_perbaikan,
                 'foto' => $fotoUrl,
+                'status' => $data->status,
             ];
         }
 
-        return response()->json([
-            'status' => true,
-            'data' => $listmobil
-        ]);
+        return response()->json(['data' => $listmobil], 200);
     }
+
 
     public function store(Request $request)
 {
+    // Validate incoming request data
     $validator = Validator::make($request->all(), [
         'nama_mobil' => 'required',
         'transmisi' => 'required',
@@ -60,6 +69,7 @@ class ListdataController extends Controller
         'foto' => 'nullable|file|image|max:5000',
     ]);
 
+    // Check for validation errors
     if ($validator->fails()) {
         return response()->json([
             'status' => false,
@@ -67,40 +77,76 @@ class ListdataController extends Controller
         ]);
     }
 
-    // Simpan file foto ke penyimpanan 'public'
+    // Store the uploaded photo in the 'public' storage
     $ext = $request->foto->getClientOriginalExtension();
     $nama_file = "foto-" . time() . "." . $ext;
     $path = $request->foto->storeAs('public', $nama_file);
 
-
-    // Buat entri baru dalam database
+    // Create a new entry in the database
     $listdata = new Listdata();
     $listdata->fill($request->all());
-    $listdata->foto = $nama_file; // Gunakan URL lengkap foto
+    $listdata->foto = $nama_file; // Store the full URL of the photo
+    $listdata->status = 'available'; // Set the status to 'available' by default
     $listdata->save();
 
-    return response()->json([
-        'status' => true,
-        'message' => 'Data Mobil berhasil disimpan',
-        'data' => $listdata,
-    ]);
+    // Check if data was saved successfully
+    if ($listdata) {
+        // Return a JSON response indicating successful data storage
+        return response()->json([
+            'status' => true,
+            'message' => 'Data Mobil berhasil disimpan',
+            'data' => $listdata,
+        ]);
+    } else {
+        // Return a JSON response indicating unsuccessful data storage
+        return response()->json([
+            'status' => false,
+            'message' => 'Gagal menyimpan data Mobil',
+        ]);
+    }
 }
 
-    public function show($id)
+    public function show($status)
     {
-        try {
-            $listdata = Listdata::findOrFail($id);
-            return response()->json([
-                'status' => true,
-                'message' => 'Data Mobil ditemukan',
-                'data' => $listdata,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Data Mobil tidak ditemukan',
-            ]);
+        // Validasi status
+        if (!in_array($status, ['sold', 'available'])) {
+            // Jika status tidak valid, kembalikan pesan error
+            return response()->json(['error' => 'Invalid status'], 400);
         }
+
+        // Ambil data mobil berdasarkan status
+        $listdata = Listdata::where('status', $status)->get();
+
+        $listmobil = [];
+
+        // Iterate through each data and update the photo URL
+        foreach ($listdata as $data) {
+            $fotoUrl = asset('storage/' . $data->foto); // Assuming 'foto' is the field storing photo paths
+            $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
+            $warna = Warna::find($data->id_warna_mobil)->nama;
+            $merk = Jenis::find($data->id_jenis_mobil)->nama;
+
+            $listmobil[] = [
+                'id' => $data->id,
+                'nama_mobil' => $data->nama_mobil,
+                'transmisi' => $transmisi,
+                'id_jenis_mobil' => $merk,
+                'tanggal_beli' => $data->tanggal_beli,
+                'tahun_mobil' => $data->tahun_mobil,
+                'id_warna_mobil' => $warna,
+                'nomor_polisi' => $data->nomor_polisi,
+                'harga_jual' => $data->harga_jual,
+                'catatan_perbaikan' => $data->catatan_perbaikan,
+                'foto' => $fotoUrl,
+                'status' => $data->status,
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $listmobil
+            ], 200);
+
     }
 
     public function update(Request $request, $id)
@@ -165,52 +211,26 @@ class ListdataController extends Controller
     }
 
 
-    public function markAsSold($id)
+    public function updateStatus($id)
     {
-        // Cari data mobil berdasarkan ID
-        $mobil = Listdata::find($id);
+    // Validasi request jika diperlukan
 
-        // Periksa apakah data mobil ditemukan
-        if (!$mobil) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Data Mobil tidak ditemukan',
-            ]);
-        }
+    $listdata = Listdata::find($id);
+    if ($listdata) {
+        $listdata->status = 'sold'; // Atur status menjadi "sold"
+        $listdata->save();
 
-        // Buat objek Transaksi baru untuk mobil yang dijual
-        $transaksi = new Transaksi();
-        $transaksi->nama_mobil = $mobil->nama_mobil;
-        $transaksi->transmisi = $mobil->transmisi;
-        $transaksi->id_jenis_mobil = $mobil->id_jenis_mobil;
-        $transaksi->tanggal_beli = $mobil->tanggal_beli;
-        $transaksi->tahun_mobil = $mobil->tahun_mobil;
-        $transaksi->id_warna_mobil = $mobil->id_warna_mobil;
-        $transaksi->nomor_polisi = $mobil->nomor_polisi;
-        $transaksi->harga_jual = $mobil->harga_jual;
-        $transaksi->catatan_perbaikan = $mobil->catatan_perbaikan;
-        $transaksi->foto = $mobil->foto;
-        $transaksi->status = 'sold';
-
-        // Simpan objek Transaksi ke dalam database
-        $transaksi->save();
-
-        // Hapus data mobil dari list stok
-        $mobil->delete();
-
-        // Beri respons berhasil
-        if($transaksi){
-            return response()->json([
-                'status' => true,
-                'message' => 'Mobil berhasil dijual dan dipindahkan ke transaksi',
-                'data' => $transaksi,
-            ]);
-        }else{
-            return response()->json([
+        return response()->json([
+            'status' => true,
+            'message' => 'Status mobil berhasil diubah menjadi sold',
+            'data' => $listdata // (Opsional) Kirim kembali data mobil yang telah diperbarui
+        ]);
+    } else {
+        return response()->json([
             'status' => false,
-            'message' => 'Mobil Tidak Berhasil disimpan',
-            ]);
-        }
+            'message' => 'Mobil tidak ditemukan',
+        ]);
+    }
     }
 
 

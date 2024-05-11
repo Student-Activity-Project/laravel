@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Listdata;
 
 class StatistikController extends Controller
 {
@@ -12,9 +13,20 @@ class StatistikController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function totalUnitTerjual()
     {
-        
+        // Hitung total unit mobil yang terjual (statusnya 'sold')
+        $totalTerjual = Listdata::where('status', 'sold')->count();
+
+        return response()->json([
+            'status' => true,
+            'total_terjual' => $totalTerjual,
+        ]);
+    }
+
+     public function index()
+    {
+
     }
 
     /**
