@@ -13,7 +13,30 @@ class StatistikController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function totalUnitTerjual()
+
+     public function totalUnitKeseluruhan()
+     {
+         // Hitung total unit mobil yang terjual (statusnya 'sold')
+         $totalUnitKeseluruhan = Listdata::all()->count();
+
+         return response()->json([
+             'status' => true,
+             'total_keseluruhan' => $totalUnitKeseluruhan,
+         ]);
+     }
+
+     public function totalUnitTersedia()
+     {
+         // Hitung total unit mobil yang terjual (statusnya 'sold')
+         $totalUnitTersedia = Listdata::where('status', 'available')->count();
+
+         return response()->json([
+             'status' => true,
+             'total_tersedia' => $totalUnitTersedia,
+         ]);
+     }
+
+     public function totalUnitTerjual()
     {
         // Hitung total unit mobil yang terjual (statusnya 'sold')
         $totalTerjual = Listdata::where('status', 'sold')->count();
@@ -23,6 +46,27 @@ class StatistikController extends Controller
             'total_terjual' => $totalTerjual,
         ]);
     }
+    public function totalTransmisiManual()
+    {
+        // Hitung total unit mobil yang terjual (statusnya 'sold')
+        $totalUnitManual = Listdata::where('transmisi', 'manual')->count();
+
+        return response()->json([
+            'status' => true,
+            'total_manual' => $totalUnitManual,
+        ]);
+    }
+    public function totalTransmisiMatic()
+    {
+        // Hitung total unit mobil yang terjual (statusnya 'sold')
+        $totalUnitMatic = Listdata::where('transmisi', 'matic')->count();
+
+        return response()->json([
+            'status' => true,
+            'total_matic' => $totalUnitMatic,
+        ]);
+    }
+
 
      public function index()
     {

@@ -22,4 +22,10 @@ Route::apiResource('transaksi', TransaksiController::class);
 
 Route::put('listdata/{id}/status', [ListdataController::class, 'updateStatus']);
 Route::get('listdata/{status}', 'ListDataController@index');
+
+Route::get('total-unit-keseluruhan', [StatistikController::class, 'totalUnitKeseluruhan']);
+Route::get('total-unit-tersedia', [StatistikController::class, 'totalUnitTersedia']);
 Route::get('total-unit-terjual', [StatistikController::class, 'totalUnitTerjual']);
+Route::get('total-unit-manual', [StatistikController::class, 'totalTransmisiManual']);
+Route::get('total-unit-matic', [StatistikController::class, 'totalTransmisiMatic']);
+
