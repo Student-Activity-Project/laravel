@@ -5,6 +5,7 @@ use App\Http\Controllers\api\TransaksiController;
 use App\Http\Controllers\api\StatistikController;
 use App\Http\Controllers\Api\AuthenticationController;
 use App\Http\Controllers\Api\JadwalController;
+use App\Http\Controllers\api\RekapdataController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -28,4 +29,6 @@ Route::get('total-unit-tersedia', [StatistikController::class, 'totalUnitTersedi
 Route::get('total-unit-terjual', [StatistikController::class, 'totalUnitTerjual']);
 Route::get('total-unit-manual', [StatistikController::class, 'totalTransmisiManual']);
 Route::get('total-unit-matic', [StatistikController::class, 'totalTransmisiMatic']);
+
+Route::get('data-by-date', [RekapdataController::class, 'dataListByDateRange']);
 

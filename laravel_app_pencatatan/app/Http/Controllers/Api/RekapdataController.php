@@ -4,14 +4,38 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\RekapData;
+use App\Models\Listdata;
 
-class MasterController extends Controller
+class RekapdataController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\JsonResponse
      */
+
+     public function dataListByDateRange(Request $request)
+     {
+         // Validasi permintaan
+         $request->validate([
+             'tanggal_awal' => 'required|date|date_format:Y-m-d',
+             'tanggal_akhir' => 'required|date|date_format:Y-m-d',
+         ]);
+
+         // Ambil tanggal awal dan tanggal akhir dari permintaan
+         $tanggalAwal = $request->input('tanggal_awal');
+         $tanggalAkhir = $request->input('tanggal_akhir');
+
+         // Query untuk mendapatkan daftar data berdasarkan jangkauan tanggal
+         $dataList = Listdata::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])->get();
+
+         return response()->json([
+             'status' => true,
+             'data_tanggal' => $dataList,
+         ]);
+     }
+
     public function index()
     {
 
