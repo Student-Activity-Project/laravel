@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\RekapData;
 use App\Models\Listdata;
+use App\Models\Warna;
+use App\Models\Jenis;
+
 
 class RekapdataController extends Controller
 {
@@ -14,75 +17,252 @@ class RekapdataController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-
-     public function dataListByDateRange(Request $request)
-     {
-         // Validasi permintaan
-         $request->validate([
-             'tanggal_awal' => 'required|date|date_format:Y-m-d',
-             'tanggal_akhir' => 'required|date|date_format:Y-m-d',
-         ]);
-
-         // Ambil tanggal awal dan tanggal akhir dari permintaan
-         $tanggalAwal = $request->input('tanggal_awal');
-         $tanggalAkhir = $request->input('tanggal_akhir');
-
-         // Query untuk mendapatkan daftar data berdasarkan jangkauan tanggal
-         $dataList = Listdata::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])->get();
-
-         return response()->json([
-             'status' => true,
-             'data_tanggal' => $dataList,
-         ]);
-     }
-
-    public function index()
+    public function dataListByDateRange(Request $request)
     {
+        // Validasi permintaan
+        $request->validate([
+            'tanggal_awal' => 'required|date|date_format:Y-m-d',
+            'tanggal_akhir' => 'required|date|date_format:Y-m-d',
+        ]);
 
+        // Ambil tanggal awal dan tanggal akhir dari permintaan
+        $tanggalAwal = $request->input('tanggal_awal');
+        $tanggalAkhir = $request->input('tanggal_akhir');
+
+        // Query untuk mendapatkan daftar data berdasarkan jangkauan tanggal
+        $transaksis = Listdata::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])->get();
+
+        $listTransaksi = [];
+
+        // Loop melalui setiap transaksi untuk memformat data dan mengambil URL foto
+        foreach ($transaksis as $data) {
+            $fotoUrl = asset('storage/' . $data->foto); // Mendapatkan URL foto dari field 'foto'
+            $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
+            $warna = Warna::find($data->id_warna_mobil)->nama;
+            $merk = Jenis::find($data->id_jenis_mobil)->nama;
+            $listTransaksi[] = [
+                'id' => $data->id,
+                'nama_mobil' => $data->nama_mobil,
+                'transmisi' => $transmisi,
+                'id_jenis_mobil' => $merk,
+                'tanggal_beli' => $data->tanggal_beli,
+                'tahun_mobil' => $data->tahun_mobil,
+                'id_warna_mobil' => $warna,
+                'nomor_polisi' => $data->nomor_polisi,
+                'harga_jual' => $data->harga_jual,
+                'catatan_perbaikan' => $data->catatan_perbaikan,
+                'foto' => $fotoUrl, // Menambahkan URL foto ke respons
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'data_tanggal' => $listTransaksi, // Mengirim data transaksi dengan URL foto
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
+    public function dataListByMerk(Request $request)
     {
+        // Validasi permintaan
+        $request->validate([
+            'merk' => 'required|string', // Pastikan 'merk' adalah string yang diperlukan
+            'tanggal_awal' => 'required|date|date_format:Y-m-d',
+            'tanggal_akhir' => 'required|date|date_format:Y-m-d',
+        ]);
 
+        // Ambil tanggal awal dan tanggal akhir dari permintaan
+        $tanggalAwal = $request->input('tanggal_awal');
+        $tanggalAkhir = $request->input('tanggal_akhir');
+
+        // Ambil nilai 'merk' dari permintaan
+        $merk = $request->input('merk');
+
+        // Query untuk mendapatkan daftar data berdasarkan merek dan jangkauan tanggal
+        $transaksis = Listdata::whereHas('jenis', function ($query) use ($merk) {
+            $query->where('nama', $merk);
+        })->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])->get();
+
+        $listTransaksi = [];
+
+        // Loop melalui setiap transaksi untuk memformat data dan mengambil URL foto
+        foreach ($transaksis as $data) {
+            $fotoUrl = asset('storage/' . $data->foto); // Mendapatkan URL foto dari field 'foto'
+            $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
+            $warna = Warna::find($data->id_warna_mobil)->nama;
+            $merk = Jenis::find($data->id_jenis_mobil)->nama;
+            $listTransaksi[] = [
+                'id' => $data->id,
+                'nama_mobil' => $data->nama_mobil,
+                'transmisi' => $transmisi,
+                'id_jenis_mobil' => $merk,
+                'tanggal_beli' => $data->tanggal_beli,
+                'tahun_mobil' => $data->tahun_mobil,
+                'id_warna_mobil' => $warna,
+                'nomor_polisi' => $data->nomor_polisi,
+                'harga_jual' => $data->harga_jual,
+                'catatan_perbaikan' => $data->catatan_perbaikan,
+                'foto' => $fotoUrl, // Menambahkan URL foto ke respons
+            ];
+        }
+
+        if($listTransaksi){
+            // Ambil semua unit mobil dari daftar transaksi
+            $unitMobil = array_column($listTransaksi, 'nama_mobil');
+
+            // Hapus duplikat dari daftar unit mobil
+            $unitMobil = array_unique($unitMobil);
+
+            // Hitung total unit mobil
+            $totalUnitMobil = count($unitMobil);
+
+            return response()->json([
+                'status' => true,
+                'data_merk' => $listTransaksi,
+                'total_unit' => $totalUnitMobil,
+                'message' => 'Data Transaksi ditemukan',
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Belum Ada Transaksi',
+            ]);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
+    public function dataListByTransmisi(Request $request)
     {
+        // Validasi permintaan
+        $request->validate([
+            'transmisi' => 'required|string', // Pastikan 'transmisi' adalah string yang diperlukan
+            'tanggal_awal' => 'required|date|date_format:Y-m-d',
+            'tanggal_akhir' => 'required|date|date_format:Y-m-d',
+        ]);
 
+        // Ambil tanggal awal dan tanggal akhir dari permintaan
+        $tanggalAwal = $request->input('tanggal_awal');
+        $tanggalAkhir = $request->input('tanggal_akhir');
+
+        // Ambil nilai 'transmisi' dari permintaan
+        $transmisi = $request->input('transmisi');
+
+        // Query untuk mendapatkan daftar data berdasarkan transmisi dan jangkauan tanggal
+        $transaksis = Listdata::where('transmisi', $transmisi)
+                                ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+                                ->get();
+
+        $listTransaksi = [];
+
+        // Loop melalui setiap transaksi untuk memformat data dan mengambil URL foto
+        foreach ($transaksis as $data) {
+            $fotoUrl = asset('storage/' . $data->foto); // Mendapatkan URL foto dari field 'foto'
+            $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
+            $warna = Warna::find($data->id_warna_mobil)->nama;
+            $merk = Jenis::find($data->id_jenis_mobil)->nama;
+            $listTransaksi[] = [
+                'id' => $data->id,
+                'nama_mobil' => $data->nama_mobil,
+                'transmisi' => $transmisi,
+                'id_jenis_mobil' => $merk,
+                'tanggal_beli' => $data->tanggal_beli,
+                'tahun_mobil' => $data->tahun_mobil,
+                'id_warna_mobil' => $warna,
+                'nomor_polisi' => $data->nomor_polisi,
+                'harga_jual' => $data->harga_jual,
+                'catatan_perbaikan' => $data->catatan_perbaikan,
+                'foto' => $fotoUrl, // Menambahkan URL foto ke respons
+            ];
+        }
+
+        if($listTransaksi){
+            // Ambil semua unit mobil dari daftar transaksi
+            $unitMobil = array_column($listTransaksi, 'nama_mobil');
+
+            // Hapus duplikat dari daftar unit mobil
+            $unitMobil = array_unique($unitMobil);
+
+            // Hitung total unit mobil
+            $totalUnitMobil = count($unitMobil);
+
+            return response()->json([
+                'status' => true,
+                'data_transmisi' => $listTransaksi,
+                'total_unit' => $totalUnitMobil,
+                'message' => 'Data Transaksi ditemukan',
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Belum Ada Transaksi',
+            ]);
+        }
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, $id)
+    public function dataListByTahun(Request $request)
     {
+        // Validasi permintaan
+        $request->validate([
+            'tahun' => 'required', // Pastikan 'tahun' adalah integer yang diperlukan
+            'tanggal_awal' => 'required|date|date_format:Y-m-d',
+            'tanggal_akhir' => 'required|date|date_format:Y-m-d',
+        ]);
 
+        // Ambil tanggal awal dan tanggal akhir dari permintaan
+        $tanggalAwal = $request->input('tanggal_awal');
+        $tanggalAkhir = $request->input('tanggal_akhir');
+
+        // Ambil nilai 'tahun' dari permintaan
+        $tahun = $request->input('tahun');
+
+        // Query untuk mendapatkan daftar data berdasarkan tahun mobil dan jangkauan tanggal
+        $transaksis = Listdata::where('tahun_mobil', $tahun)
+                                ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+                                ->get();
+
+        $listTransaksi = [];
+
+        // Loop melalui setiap transaksi untuk memformat data dan mengambil URL foto
+        foreach ($transaksis as $data) {
+            $fotoUrl = asset('storage/' . $data->foto); // Mendapatkan URL foto dari field 'foto'
+            $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
+            $warna = Warna::find($data->id_warna_mobil)->nama;
+            $merk = Jenis::find($data->id_jenis_mobil)->nama;
+            $listTransaksi[] = [
+                'id' => $data->id,
+                'nama_mobil' => $data->nama_mobil,
+                'transmisi' => $transmisi,
+                'id_jenis_mobil' => $merk,
+                'tanggal_beli' => $data->tanggal_beli,
+                'tahun_mobil' => $data->tahun_mobil,
+                'id_warna_mobil' => $warna,
+                'nomor_polisi' => $data->nomor_polisi,
+                'harga_jual' => $data->harga_jual,
+                'catatan_perbaikan' => $data->catatan_perbaikan,
+                'foto' => $fotoUrl, // Menambahkan URL foto ke respons
+            ];
+        }
+
+        if($listTransaksi){
+            // Ambil semua unit mobil dari daftar transaksi
+            $unitMobil = array_column($listTransaksi, 'nama_mobil');
+
+            // Hapus duplikat dari daftar unit mobil
+            $unitMobil = array_unique($unitMobil);
+
+            // Hitung total unit mobil
+            $totalUnitMobil = count($unitMobil);
+
+            return response()->json([
+                'status' => true,
+                'data_tahun' => $listTransaksi,
+                'total_unit' => $totalUnitMobil,
+                'message' => 'Data Transaksi ditemukan',
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Belum Ada Transaksi',
+            ]);
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy($id)
-    {
-
-    }
 }

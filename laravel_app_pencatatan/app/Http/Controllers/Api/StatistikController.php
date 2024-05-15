@@ -66,55 +66,47 @@ class StatistikController extends Controller
             'total_matic' => $totalUnitMatic,
         ]);
     }
-
-
-     public function index()
+    public function getTotalPenjualan()
     {
+        // Query untuk menghitung total penjualan
+        $totalSales = Listdata::where('status', 'sold')->sum('harga_jual');
+        $totalUnitSold = Listdata::where('status', 'sold')->count();
+        // Format total penjualan dengan tanda titik sebagai pemisah ribuan
+        $formattedTotalSales = number_format($totalSales, 0, ',', '.');
 
+        return response()->json([
+            'status' => true,
+            'total_penjualan' => $formattedTotalSales,
+            'total_unit_terjual' => $totalUnitSold,
+            'message' => 'Total penjualan dan jumlah unit terjual berhasil diambil',
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
-    {
+    public function getTotalPenjualanTanggal(Request $request)
+{
+    // Validasi permintaan
+    $request->validate([
+        'tanggal_awal' => 'required|date|date_format:Y-m-d',
+        'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
+    ]);
 
-    }
+    // Ambil tanggal awal dan akhir dari permintaan
+    $tanggalAwal = $request->input('tanggal_awal');
+    $tanggalAkhir = $request->input('tanggal_akhir');
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
+    // Query untuk menghitung total penjualan dan jumlah unit mobil terjual berdasarkan tanggal
+    $totalSales = Listdata::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+                            ->where('status', 'sold')->sum('harga_jual');
+    $totalUnitSold = Listdata::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+                                ->where('status', 'sold')->count();
+    // Format total penjualan dengan tanda titik sebagai pemisah ribuan
+    $formattedTotalSales = number_format($totalSales, 0, ',', '.');
 
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, $id)
-    {
-
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy($id)
-    {
-
-    }
+    return response()->json([
+        'status' => true,
+        'total_penjualan' => $formattedTotalSales,
+        'total_unit_terjual' => $totalUnitSold,
+        'message' => 'Total penjualan dan jumlah unit terjual berhasil diambil berdasarkan tanggal',
+    ]);
+}
 }

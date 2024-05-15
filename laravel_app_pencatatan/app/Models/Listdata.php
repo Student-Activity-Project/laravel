@@ -10,5 +10,9 @@ class Listdata extends Model
     use HasFactory;
 
     protected $guarded = [];
+    public function jenis()
+    {
+        return $this->belongsTo(Jenis::class, 'id_jenis_mobil');
+    }
 
 }

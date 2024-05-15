@@ -206,7 +206,7 @@ class ListdataController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Data Mobil berhasil dihapus',
-            'data' => $listdata,
+            'data' => null, // Tidak perlu mengirim data kembali setelah dihapus
         ]);
     }
 

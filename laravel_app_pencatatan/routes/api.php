@@ -29,6 +29,11 @@ Route::get('total-unit-tersedia', [StatistikController::class, 'totalUnitTersedi
 Route::get('total-unit-terjual', [StatistikController::class, 'totalUnitTerjual']);
 Route::get('total-unit-manual', [StatistikController::class, 'totalTransmisiManual']);
 Route::get('total-unit-matic', [StatistikController::class, 'totalTransmisiMatic']);
+Route::get('total-penjualan', [StatistikController::class, 'getTotalPenjualan']);
+Route::get('total-penjualan-tanggal', [StatistikController::class, 'getTotalPenjualanTanggal']);
 
 Route::get('data-by-date', [RekapdataController::class, 'dataListByDateRange']);
+Route::get('rekap/merk', [RekapdataController::class, 'dataListByMerk']);
+Route::get('rekap/transmisi', [RekapdataController::class, 'dataListByTransmisi']);
+Route::get('rekap/tahun', [RekapdataController::class, 'dataListByTahun']);
 
