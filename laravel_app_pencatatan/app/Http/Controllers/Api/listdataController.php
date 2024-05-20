@@ -13,16 +13,10 @@ use Illuminate\Support\Facades\Validator;
 
 class ListdataController extends Controller
 {
-    public function index($status)
+    public function index()
     {
-        // Validasi status
-        if (!in_array($status, ['sold', 'available'])) {
-            // Jika status tidak valid, kembalikan pesan error
-            return response()->json(['error' => 'Invalid status'], 400);
-        }
-
         // Ambil data mobil berdasarkan status
-        $listdata = Listdata::where('status', $status)->get();
+        $listdata = Listdata::all();
 
         $listmobil = [];
 

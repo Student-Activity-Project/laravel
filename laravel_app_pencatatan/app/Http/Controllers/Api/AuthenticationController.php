@@ -47,7 +47,7 @@ class AuthenticationController extends Controller
         $request->validate([
             'username' => 'required',
             'password' => 'required',
-            'device_name' => 'required', //untuk menentukan nama token
+            // 'device_name' => 'required', //untuk menentukan nama token
         ]);
         //proses cek user untuk login
         $user = User::where("username", $request->username)->first();
@@ -62,7 +62,7 @@ class AuthenticationController extends Controller
         }
 
         //generate user acces token
-        $token = $user->createToken($request->device_name)->plainTextToken; //all ability
+        $token = $user->createToken($request->password)->plainTextToken; //all ability
         // $token = $user->createToken($request->device_name, ['prodi:create', 'prodi:delete'])->plainTextToken; //khusus create n delete
         return response()->json(
             [
@@ -74,6 +74,11 @@ class AuthenticationController extends Controller
     }
     public function logout(Request $request)
     {
-        return null;
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Logout Sukses!',
+        ]);
     }
 }
