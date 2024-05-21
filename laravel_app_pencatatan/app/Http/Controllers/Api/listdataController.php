@@ -157,7 +157,6 @@ class ListdataController extends Controller
         'nomor_polisi' => 'required',
         'harga_jual' => 'required|numeric|min:0',
         'catatan_perbaikan' => 'required',
-        // 'foto' => 'required',
     ]);
 
     if ($validator->fails()) {
