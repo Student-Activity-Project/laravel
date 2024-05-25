@@ -4,7 +4,7 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Listdata;
+use App\Models\Stokmobil;
 use Illuminate\Support\Facades\Auth;
 
 class StatistikController extends Controller
@@ -21,7 +21,7 @@ class StatistikController extends Controller
         $userId = Auth::id();
 
         // Hitung total unit mobil yang terkait dengan pengguna
-        $totalUnitKeseluruhan = Listdata::where('user_id', $userId)->count();
+        $totalUnitKeseluruhan = Stokmobil::where('user_id', $userId)->count();
 
         return response()->json([
             'status' => true,
@@ -35,7 +35,7 @@ class StatistikController extends Controller
         $userId = Auth::id();
 
         // Hitung total unit mobil yang tersedia (statusnya 'available') dan terkait dengan pengguna
-        $totalUnitTersedia = Listdata::where('user_id', $userId)
+        $totalUnitTersedia = Stokmobil::where('user_id', $userId)
                                       ->where('status', 'available')->count();
 
         return response()->json([
@@ -50,7 +50,7 @@ class StatistikController extends Controller
         $userId = Auth::id();
 
         // Hitung total unit mobil yang terjual (statusnya 'sold') dan terkait dengan pengguna
-        $totalTerjual = Listdata::where('user_id', $userId)
+        $totalTerjual = Stokmobil::where('user_id', $userId)
                                 ->where('status', 'sold')->count();
 
         return response()->json([
@@ -65,7 +65,7 @@ class StatistikController extends Controller
         $userId = Auth::id();
 
         // Hitung total unit mobil dengan transmisi manual dan terkait dengan pengguna
-        $totalUnitManual = Listdata::where('user_id', $userId)
+        $totalUnitManual = Stokmobil::where('user_id', $userId)
                                    ->where('transmisi', 'manual')->count();
 
         return response()->json([
@@ -80,7 +80,7 @@ class StatistikController extends Controller
         $userId = Auth::id();
 
         // Hitung total unit mobil dengan transmisi matic dan terkait dengan pengguna
-        $totalUnitMatic = Listdata::where('user_id', $userId)
+        $totalUnitMatic = Stokmobil::where('user_id', $userId)
                                   ->where('transmisi', 'matic')->count();
 
         return response()->json([
@@ -95,9 +95,9 @@ class StatistikController extends Controller
         $userId = Auth::id();
 
         // Query untuk menghitung total penjualan terkait dengan pengguna
-        $totalSales = Listdata::where('user_id', $userId)
+        $totalSales = Stokmobil::where('user_id', $userId)
                               ->where('status', 'sold')->sum('harga_jual');
-        $totalUnitSold = Listdata::where('user_id', $userId)
+        $totalUnitSold = Stokmobil::where('user_id', $userId)
                                  ->where('status', 'sold')->count();
 
         // Format total penjualan dengan tanda titik sebagai pemisah ribuan
@@ -127,10 +127,10 @@ class StatistikController extends Controller
         $tanggalAkhir = $request->input('tanggal_akhir');
 
         // Query untuk menghitung total penjualan dan jumlah unit mobil terjual berdasarkan tanggal dan pengguna
-        $totalSales = Listdata::where('user_id', $userId)
+        $totalSales = Stokmobil::where('user_id', $userId)
                               ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
                               ->where('status', 'sold')->sum('harga_jual');
-        $totalUnitSold = Listdata::where('user_id', $userId)
+        $totalUnitSold = Stokmobil::where('user_id', $userId)
                                  ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
                                  ->where('status', 'sold')->count();
 

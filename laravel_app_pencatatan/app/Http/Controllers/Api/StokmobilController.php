@@ -4,7 +4,7 @@ namespace App\Http\Controllers\api;
 
 
 use App\Http\Controllers\Controller;
-use App\Models\Listdata;
+use App\Models\Stokmobil;
 use App\Models\Warna;
 use App\Models\User;
 use App\Models\Jenis;
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-class ListdataController extends Controller
+class StokmobilController extends Controller
 {
     public function index()
     {
@@ -23,7 +23,7 @@ class ListdataController extends Controller
         $user_id = Auth::id();
 
         // Ambil data mobil berdasarkan user_id pengguna yang saat ini masuk
-        $listdata = Listdata::where('user_id', $user_id)->get();
+        $listdata = Stokmobil::where('user_id', $user_id)->get();
 
         $listmobil = [];
 
@@ -86,7 +86,7 @@ class ListdataController extends Controller
     $path = $request->foto->storeAs('public', $nama_file);
 
     // Create a new entry in the database
-    $listdata = new Listdata();
+    $listdata = new Stokmobil();
     $listdata->fill($request->all());
     $listdata->user_id = $user_id;
     $listdata->foto = $nama_file; // Store the full URL of the photo
@@ -119,7 +119,7 @@ class ListdataController extends Controller
         }
 
         // Ambil data mobil berdasarkan status
-        $listdata = Listdata::where('status', $status)->get();
+        $listdata = Stokmobil::where('status', $status)->get();
 
         $listmobil = [];
 
@@ -155,7 +155,7 @@ class ListdataController extends Controller
 
     public function update(Request $request, $id)
 {
-    $listdata = Listdata::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
+    $listdata = Stokmobil::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
 
     $validator = Validator::make($request->all(), [
         'nama_mobil' => 'required|min:2|max:20',
@@ -189,7 +189,7 @@ class ListdataController extends Controller
 
     public function destroy($id)
     {
-        $listdata = Listdata::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
+        $listdata = Stokmobil::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
         $listdata->delete();
 
         return response()->json([
@@ -204,7 +204,7 @@ class ListdataController extends Controller
     {
         // Validasi request jika diperlukan
 
-        $listdata = Listdata::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
+        $listdata = Stokmobil::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
 
         if ($listdata) {
             $listdata->status = 'sold'; // Atur status menjadi "sold"
@@ -231,7 +231,7 @@ class ListdataController extends Controller
         ]);
 
         // Temukan record listdata berdasarkan ID
-        $listdata = Listdata::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
+        $listdata = Stokmobil::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
 
         if ($listdata) {
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\api\ListdataController;
+use App\Http\Controllers\api\StokmobilController;
 use App\Http\Controllers\api\TransaksiController;
 use App\Http\Controllers\api\StatistikController;
 use App\Http\Controllers\Api\AuthenticationController;
@@ -13,12 +14,12 @@ Route::post('/login', [AuthenticationController::class, 'login']);
 
 Route::group(['middleware' => ['auth:sanctum']], function(){
 
-    Route::apiResource('listdata', ListdataController::class);
+    Route::apiResource('listdata', StokmobilController::class);
 
     Route::post('updateUser/{id}', [AuthenticationController::class, 'updateUser']);
 
-    Route::put('listdata/{id}/status', [ListdataController::class, 'updateStatus']);
-    Route::post('updateFoto/{id}', [ListdataController::class, 'updateFoto']);
+    Route::put('listdata/{id}/status', [StokmobilController::class, 'updateStatus']);
+    Route::post('updateFoto/{id}', [StokmobilController::class, 'updateFoto']);
 
     Route::get('total-unit-keseluruhan', [StatistikController::class, 'totalUnitKeseluruhan']);
     Route::get('total-unit-tersedia', [StatistikController::class, 'totalUnitTersedia']);

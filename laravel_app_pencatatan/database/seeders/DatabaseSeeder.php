@@ -22,10 +22,6 @@ class DatabaseSeeder extends Seeder
             'username' => 'admin',
             'password' => Hash::make('admin'),
         ]);
-        User::create([
-            'username' => 'admin2',
-            'password' => Hash::make('admin2'),
-        ]);
 
     }
 }

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\RekapData;
-use App\Models\Listdata;
+use App\Models\Stokmobil;
 use App\Models\Warna;
 use App\Models\Jenis;
 
@@ -32,7 +32,7 @@ class RekapdataController extends Controller
         $tanggalAkhir = $request->input('tanggal_akhir');
 
         // Query untuk mendapatkan daftar data berdasarkan jangkauan tanggal
-        $transaksis = Listdata::where('user_id', $userId)
+        $transaksis = Stokmobil::where('user_id', $userId)
         ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
         ->get();
 
@@ -83,7 +83,7 @@ class RekapdataController extends Controller
         $merk = $request->input('merk');
 
         // Query untuk mendapatkan daftar data berdasarkan merek dan jangkauan tanggal
-        $transaksis = Listdata::whereHas('jenis', function ($query) use ($merk) {
+        $transaksis = Stokmobil::whereHas('jenis', function ($query) use ($merk) {
             $query->where('nama', $merk);
         })
         ->where('user_id', $userId) // Menambahkan kondisi untuk membatasi data berdasarkan pengguna yang terotentikasi
@@ -155,7 +155,7 @@ class RekapdataController extends Controller
         $transmisi = $request->input('transmisi');
 
         // Query untuk mendapatkan daftar data berdasarkan transmisi dan jangkauan tanggal
-        $transaksis = Listdata::where('transmisi', $transmisi)
+        $transaksis = Stokmobil::where('transmisi', $transmisi)
         ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
         ->where('user_id', $userId) // Menambahkan kondisi untuk membatasi data berdasarkan pengguna yang terotentikasi
         ->get();
@@ -225,7 +225,7 @@ class RekapdataController extends Controller
         $tahun = $request->input('tahun');
 
         // Query untuk mendapatkan daftar data berdasarkan tahun mobil dan jangkauan tanggal
-        $transaksis = Listdata::where('tahun_mobil', $tahun)
+        $transaksis = Stokmobil::where('tahun_mobil', $tahun)
                                 ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
                                 ->where('user_id', $userId)
                                 ->get();

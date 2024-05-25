@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('listdatas', function (Blueprint $table) {
+        Schema::create('stokmobils', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained();
             $table->string('nama_mobil');
@@ -38,6 +38,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('listdatas');
+        Schema::dropIfExists('stokmobils');
     }
 };
