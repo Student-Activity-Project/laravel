@@ -5,6 +5,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Listdata;
+use Illuminate\Support\Facades\Auth;
 
 class StatistikController extends Controller
 {
@@ -14,63 +15,91 @@ class StatistikController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
 
-     public function totalUnitKeseluruhan()
-     {
-         // Hitung total unit mobil yang terjual (statusnya 'sold')
-         $totalUnitKeseluruhan = Listdata::all()->count();
-
-         return response()->json([
-             'status' => true,
-             'total_keseluruhan' => $totalUnitKeseluruhan,
-         ]);
-     }
-
-     public function totalUnitTersedia()
-     {
-         // Hitung total unit mobil yang terjual (statusnya 'sold')
-         $totalUnitTersedia = Listdata::where('status', 'available')->count();
-
-         return response()->json([
-             'status' => true,
-             'total_tersedia' => $totalUnitTersedia,
-         ]);
-     }
-
-     public function totalUnitTerjual()
+    public function totalUnitKeseluruhan()
     {
-        // Hitung total unit mobil yang terjual (statusnya 'sold')
-        $totalTerjual = Listdata::where('status', 'sold')->count();
+        // Mendapatkan ID pengguna yang terotentikasi
+        $userId = Auth::id();
+
+        // Hitung total unit mobil yang terkait dengan pengguna
+        $totalUnitKeseluruhan = Listdata::where('user_id', $userId)->count();
+
+        return response()->json([
+            'status' => true,
+            'total_keseluruhan' => $totalUnitKeseluruhan,
+        ]);
+    }
+
+    public function totalUnitTersedia()
+    {
+        // Mendapatkan ID pengguna yang terotentikasi
+        $userId = Auth::id();
+
+        // Hitung total unit mobil yang tersedia (statusnya 'available') dan terkait dengan pengguna
+        $totalUnitTersedia = Listdata::where('user_id', $userId)
+                                      ->where('status', 'available')->count();
+
+        return response()->json([
+            'status' => true,
+            'total_tersedia' => $totalUnitTersedia,
+        ]);
+    }
+
+    public function totalUnitTerjual()
+    {
+        // Mendapatkan ID pengguna yang terotentikasi
+        $userId = Auth::id();
+
+        // Hitung total unit mobil yang terjual (statusnya 'sold') dan terkait dengan pengguna
+        $totalTerjual = Listdata::where('user_id', $userId)
+                                ->where('status', 'sold')->count();
 
         return response()->json([
             'status' => true,
             'total_terjual' => $totalTerjual,
         ]);
     }
+
     public function totalTransmisiManual()
     {
-        // Hitung total unit mobil yang terjual (statusnya 'sold')
-        $totalUnitManual = Listdata::where('transmisi', 'manual')->count();
+        // Mendapatkan ID pengguna yang terotentikasi
+        $userId = Auth::id();
+
+        // Hitung total unit mobil dengan transmisi manual dan terkait dengan pengguna
+        $totalUnitManual = Listdata::where('user_id', $userId)
+                                   ->where('transmisi', 'manual')->count();
 
         return response()->json([
             'status' => true,
             'total_manual' => $totalUnitManual,
         ]);
     }
+
     public function totalTransmisiMatic()
     {
-        // Hitung total unit mobil yang terjual (statusnya 'sold')
-        $totalUnitMatic = Listdata::where('transmisi', 'matic')->count();
+        // Mendapatkan ID pengguna yang terotentikasi
+        $userId = Auth::id();
+
+        // Hitung total unit mobil dengan transmisi matic dan terkait dengan pengguna
+        $totalUnitMatic = Listdata::where('user_id', $userId)
+                                  ->where('transmisi', 'matic')->count();
 
         return response()->json([
             'status' => true,
             'total_matic' => $totalUnitMatic,
         ]);
     }
+
     public function getTotalPenjualan()
     {
-        // Query untuk menghitung total penjualan
-        $totalSales = Listdata::where('status', 'sold')->sum('harga_jual');
-        $totalUnitSold = Listdata::where('status', 'sold')->count();
+        // Mendapatkan ID pengguna yang terotentikasi
+        $userId = Auth::id();
+
+        // Query untuk menghitung total penjualan terkait dengan pengguna
+        $totalSales = Listdata::where('user_id', $userId)
+                              ->where('status', 'sold')->sum('harga_jual');
+        $totalUnitSold = Listdata::where('user_id', $userId)
+                                 ->where('status', 'sold')->count();
+
         // Format total penjualan dengan tanda titik sebagai pemisah ribuan
         $formattedTotalSales = number_format($totalSales, 0, ',', '.');
 
@@ -83,30 +112,36 @@ class StatistikController extends Controller
     }
 
     public function getTotalPenjualanTanggal(Request $request)
-{
-    // Validasi permintaan
-    $request->validate([
-        'tanggal_awal' => 'required|date|date_format:Y-m-d',
-        'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
-    ]);
+    {
+        // Mendapatkan ID pengguna yang terotentikasi
+        $userId = Auth::id();
 
-    // Ambil tanggal awal dan akhir dari permintaan
-    $tanggalAwal = $request->input('tanggal_awal');
-    $tanggalAkhir = $request->input('tanggal_akhir');
+        // Validasi permintaan
+        $request->validate([
+            'tanggal_awal' => 'required|date|date_format:Y-m-d',
+            'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
+        ]);
 
-    // Query untuk menghitung total penjualan dan jumlah unit mobil terjual berdasarkan tanggal
-    $totalSales = Listdata::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
-                            ->where('status', 'sold')->sum('harga_jual');
-    $totalUnitSold = Listdata::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
-                                ->where('status', 'sold')->count();
-    // Format total penjualan dengan tanda titik sebagai pemisah ribuan
-    $formattedTotalSales = number_format($totalSales, 0, ',', '.');
+        // Ambil tanggal awal dan akhir dari permintaan
+        $tanggalAwal = $request->input('tanggal_awal');
+        $tanggalAkhir = $request->input('tanggal_akhir');
 
-    return response()->json([
-        'status' => true,
-        'total_penjualan' => $formattedTotalSales,
-        'total_unit_terjual' => $totalUnitSold,
-        'message' => 'Total penjualan dan jumlah unit terjual berhasil diambil berdasarkan tanggal',
-    ]);
-}
+        // Query untuk menghitung total penjualan dan jumlah unit mobil terjual berdasarkan tanggal dan pengguna
+        $totalSales = Listdata::where('user_id', $userId)
+                              ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+                              ->where('status', 'sold')->sum('harga_jual');
+        $totalUnitSold = Listdata::where('user_id', $userId)
+                                 ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+                                 ->where('status', 'sold')->count();
+
+        // Format total penjualan dengan tanda titik sebagai pemisah ribuan
+        $formattedTotalSales = number_format($totalSales, 0, ',', '.');
+
+        return response()->json([
+            'status' => true,
+            'total_penjualan' => $formattedTotalSales,
+            'total_unit_terjual' => $totalUnitSold,
+            'message' => 'Total penjualan dan jumlah unit terjual berhasil diambil berdasarkan tanggal',
+        ]);
+    }
 }

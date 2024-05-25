@@ -2,21 +2,28 @@
 
 namespace App\Http\Controllers\api;
 
+
 use App\Http\Controllers\Controller;
 use App\Models\Listdata;
 use App\Models\Warna;
+use App\Models\User;
 use App\Models\Jenis;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Support\Facades\Log;
 class ListdataController extends Controller
 {
     public function index()
     {
         // Ambil data mobil berdasarkan status
-        $listdata = Listdata::all();
+        // $listdata = Listdata::all();
+        $user_id = Auth::id();
+
+        // Ambil data mobil berdasarkan user_id pengguna yang saat ini masuk
+        $listdata = Listdata::where('user_id', $user_id)->get();
 
         $listmobil = [];
 
@@ -50,16 +57,18 @@ class ListdataController extends Controller
     public function store(Request $request)
 {
     // Validate incoming request data
+    $user_id = Auth::id();
+
     $validator = Validator::make($request->all(), [
-        'nama_mobil' => 'required',
+        'nama_mobil' => 'required|min:2|max:20',
         'transmisi' => 'required',
         'id_jenis_mobil' => 'required',
         'tanggal_beli' => 'required|date|date_format:Y-m-d',
-        'tahun_mobil' => 'required',
+        'tahun_mobil' => 'required|integer|min:1900|max:' . date('Y'),
         'id_warna_mobil' => 'required',
-        'nomor_polisi' => 'required',
-        'harga_jual' => 'required|numeric|min:0',
-        'catatan_perbaikan' => 'required',
+        'nomor_polisi' => 'required|max:10',
+        'harga_jual' => 'required|numeric|min:0|max:100000000000',
+        'catatan_perbaikan' => 'required|max:200',
         'foto' => 'nullable|file|image|max:5000',
     ]);
 
@@ -79,6 +88,7 @@ class ListdataController extends Controller
     // Create a new entry in the database
     $listdata = new Listdata();
     $listdata->fill($request->all());
+    $listdata->user_id = $user_id;
     $listdata->foto = $nama_file; // Store the full URL of the photo
     $listdata->status = 'available'; // Set the status to 'available' by default
     $listdata->save();
@@ -145,18 +155,18 @@ class ListdataController extends Controller
 
     public function update(Request $request, $id)
 {
-    $listdata = Listdata::findOrFail($id);
+    $listdata = Listdata::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
 
     $validator = Validator::make($request->all(), [
-        'nama_mobil' => 'required',
+        'nama_mobil' => 'required|min:2|max:20',
         'transmisi' => 'required',
         'id_jenis_mobil' => 'required',
         'tanggal_beli' => 'required|date|date_format:Y-m-d',
-        'tahun_mobil' => 'required',
+        'tahun_mobil' => 'required|integer|min:1900|max:' . date('Y'),
         'id_warna_mobil' => 'required',
-        'nomor_polisi' => 'required',
-        'harga_jual' => 'required|numeric|min:0',
-        'catatan_perbaikan' => 'required',
+        'nomor_polisi' => 'required|max:10',
+        'harga_jual' => 'required|numeric|min:0|max:100000000000',
+        'catatan_perbaikan' => 'required|max:200',
     ]);
 
     if ($validator->fails()) {
@@ -165,20 +175,6 @@ class ListdataController extends Controller
             'message' => $validator->errors()->first(),
         ]);
     }
-
-    // Periksa apakah ada file foto yang dikirimkan
-    // if ($request->hasFile('foto')) {
-    //     // Hapus foto lama jika ada
-    //     if ($listdata->foto) {
-    //         Storage::delete('public/' . $listdata->foto);
-    //     }
-
-    //     // Simpan foto baru
-    //     $ext = $request->foto->getClientOriginalExtension();
-    //     $nama_file = "foto-" . time() . "." . $ext;
-    //     $path = $request->foto->storeAs("public", $nama_file);
-    //     $listdata->foto = $nama_file;
-    // }
 
     // Isi model Listdata dengan data yang diperbarui
     $listdata->fill($request->all());
@@ -193,7 +189,7 @@ class ListdataController extends Controller
 
     public function destroy($id)
     {
-        $listdata = Listdata::findOrFail($id);
+        $listdata = Listdata::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
         $listdata->delete();
 
         return response()->json([
@@ -206,24 +202,64 @@ class ListdataController extends Controller
 
     public function updateStatus($id)
     {
-    // Validasi request jika diperlukan
+        // Validasi request jika diperlukan
 
-    $listdata = Listdata::find($id);
-    if ($listdata) {
-        $listdata->status = 'sold'; // Atur status menjadi "sold"
-        $listdata->save();
+        $listdata = Listdata::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Status mobil berhasil diubah menjadi sold',
-            'data' => $listdata // (Opsional) Kirim kembali data mobil yang telah diperbarui
-        ]);
-    } else {
-        return response()->json([
-            'status' => false,
-            'message' => 'Mobil tidak ditemukan',
-        ]);
+        if ($listdata) {
+            $listdata->status = 'sold'; // Atur status menjadi "sold"
+            $listdata->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Mobil Berhasil Dijual',
+                'data' => $listdata // (Opsional) Kirim kembali data mobil yang telah diperbarui
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mobil Gagal Dijual',
+            ]);
+        }
     }
+
+    public function updateFoto(Request $request, $id) {
+
+        // Validasi permintaan untuk memastikan 'foto' ada
+        $request->validate([
+            'foto' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        // Temukan record listdata berdasarkan ID
+        $listdata = Listdata::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
+
+        if ($listdata) {
+
+            // Dapatkan ekstensi file
+            $ext = $request->file('foto')->getClientOriginalExtension();
+            // Buat nama file baru
+            $nama_file = "foto-" . time() . "." . $ext;
+            // Simpan file di disk 'public'
+            $path = $request->file('foto')->storeAs("public", $nama_file);
+
+            // Perbarui field 'foto' di database
+            $listdata->foto = $nama_file;
+            $listdata->save();
+
+            // Kembalikan respon JSON yang sukses
+            return response()->json([
+                'status' => true,
+                'message' => 'Sukses Mengubah Data',
+                'data' => $listdata
+            ], 200);
+        } else {
+
+            // Kembalikan respon JSON yang gagal jika record tidak ditemukan
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal Mengubah Data, Record Tidak Ditemukan'
+            ], 404);
+        }
     }
 
 

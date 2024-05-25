@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('listdatas', function (Blueprint $table) {
             $table->id();
-            // $table->foreignId('user_id')->constrained();
+            $table->foreignId('user_id')->constrained();
             $table->string('nama_mobil');
             $table->enum('transmisi', ['manual', 'matic']);
             $table->foreignId('id_jenis_mobil')->constrained('jeniss');

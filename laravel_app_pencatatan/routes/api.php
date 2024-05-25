@@ -9,15 +9,16 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 
 Route::post('/login', [AuthenticationController::class, 'login']);
+//Route::apiResource('user', UserController::class);
 
 Route::group(['middleware' => ['auth:sanctum']], function(){
-    //Route::apiResource('user', UserController::class);
-    
+
     Route::apiResource('listdata', ListdataController::class);
 
-    Route::put('listdata/{id}/status', [ListdataController::class, 'updateStatus']);
-    Route::put('updateFoto/{id}', [ListdataController::class, 'updateStatus']);
+    Route::post('updateUser/{id}', [AuthenticationController::class, 'updateUser']);
 
+    Route::put('listdata/{id}/status', [ListdataController::class, 'updateStatus']);
+    Route::post('updateFoto/{id}', [ListdataController::class, 'updateFoto']);
 
     Route::get('total-unit-keseluruhan', [StatistikController::class, 'totalUnitKeseluruhan']);
     Route::get('total-unit-tersedia', [StatistikController::class, 'totalUnitTersedia']);

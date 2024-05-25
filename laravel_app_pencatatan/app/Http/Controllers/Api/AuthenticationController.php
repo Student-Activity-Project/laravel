@@ -56,7 +56,7 @@ class AuthenticationController extends Controller
                 [
                 'status' => false,
                 'token' => null,
-                'message' => 'User tidak ditemukan!',
+                'message' => 'User Tidak Ditemukan/Password Salah!',
                 ]
             );
         }
@@ -68,10 +68,66 @@ class AuthenticationController extends Controller
             [
             'status' => true,
             'token' => $token,
+            'user_id' => $user->id,
             'message' => 'Login Sukses!',
             ]
         );
     }
+
+    public function updateUser(Request $request, string $id)
+{
+
+    // Validate the incoming request data
+    $validate = $request->validate([
+        'username' => ['required', 'string', 'max:50'],
+        'password' => ['required', 'string', 'min:5'], // adjust rules as needed
+    ]);
+
+    // Get the user by ID
+    $user = User::find($id);
+
+    // Check if user exists
+    if (!$user) {
+        return response()->json([
+            'kode' => 0,
+            'pesan' => "User not found",
+        ]);
+    }
+
+    // Prepare data for update
+    $data = [];
+
+    // Check if username is present in the request and update it
+    if ($request->has('username')) {
+        $data['username'] = $request->username;
+    }
+
+    // If password is present, hash it and update
+    if ($request->has('password')) {
+        $data['password'] = Hash::make($request->password);
+    }
+
+    // Attempt to update the user
+    $updated = User::where('id', $id)->first();
+    $updated->username = $validate['username'];
+    $updated->password = Hash::make($request->password);
+    $updated -> save();
+
+    // Check if update was successful
+    if ($updated) {
+        return response()->json([
+            'kode' => 1,
+            'pesan' => "Sukses Mengupdate Data",
+            'data' => $updated // return updated user data
+        ]);
+    } else {
+        return response()->json([
+            'kode' => 0,
+            'pesan' => "Gagal Mengupdate Data",
+        ]);
+    }
+}
+
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -81,4 +137,5 @@ class AuthenticationController extends Controller
             'message' => 'Logout Sukses!',
         ]);
     }
+
 }
