@@ -1,16 +1,14 @@
 <?php
 
-use App\Http\Controllers\api\ListdataController;
 use App\Http\Controllers\api\StokmobilController;
-use App\Http\Controllers\api\TransaksiController;
 use App\Http\Controllers\api\StatistikController;
 use App\Http\Controllers\Api\AuthenticationController;
 use App\Http\Controllers\api\RekapdataController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
 
+Route::post('/register', [AuthenticationController::class, 'register']);
 Route::post('/login', [AuthenticationController::class, 'login']);
-//Route::apiResource('user', UserController::class);
+Route::delete('/deleteUser/{id}', [AuthenticationController::class, 'deleteUser']);
 
 Route::group(['middleware' => ['auth:sanctum']], function(){
 

@@ -20,7 +20,6 @@ class RekapdataController extends Controller
      */
     public function dataListByDateRange(Request $request)
     {
-        $userId = Auth::id();
         // Validasi permintaan
         $request->validate([
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
@@ -32,9 +31,7 @@ class RekapdataController extends Controller
         $tanggalAkhir = $request->input('tanggal_akhir');
 
         // Query untuk mendapatkan daftar data berdasarkan jangkauan tanggal
-        $transaksis = Stokmobil::where('user_id', $userId)
-        ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
-        ->get();
+        $transaksis = Stokmobil::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])->get();
 
         $listTransaksi = [];
 
@@ -67,7 +64,6 @@ class RekapdataController extends Controller
 
     public function dataListByMerk(Request $request)
     {
-        $userId = Auth::id();
         // Validasi permintaan
         $request->validate([
             'merk' => 'required|string', // Pastikan 'merk' adalah string yang diperlukan
@@ -86,7 +82,6 @@ class RekapdataController extends Controller
         $transaksis = Stokmobil::whereHas('jenis', function ($query) use ($merk) {
             $query->where('nama', $merk);
         })
-        ->where('user_id', $userId) // Menambahkan kondisi untuk membatasi data berdasarkan pengguna yang terotentikasi
         ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
         ->get();
 
@@ -139,7 +134,6 @@ class RekapdataController extends Controller
 
     public function dataListByTransmisi(Request $request)
     {
-        $userId = Auth::id();
         // Validasi permintaan
         $request->validate([
             'transmisi' => 'required|string', // Pastikan 'transmisi' adalah string yang diperlukan
@@ -157,7 +151,6 @@ class RekapdataController extends Controller
         // Query untuk mendapatkan daftar data berdasarkan transmisi dan jangkauan tanggal
         $transaksis = Stokmobil::where('transmisi', $transmisi)
         ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
-        ->where('user_id', $userId) // Menambahkan kondisi untuk membatasi data berdasarkan pengguna yang terotentikasi
         ->get();
 
         $listTransaksi = [];
@@ -209,7 +202,6 @@ class RekapdataController extends Controller
 
     public function dataListByTahun(Request $request)
     {
-        $userId = Auth::id();
         // Validasi permintaan
         $request->validate([
             'tahun' => 'required', // Pastikan 'tahun' adalah integer yang diperlukan
@@ -227,7 +219,6 @@ class RekapdataController extends Controller
         // Query untuk mendapatkan daftar data berdasarkan tahun mobil dan jangkauan tanggal
         $transaksis = Stokmobil::where('tahun_mobil', $tahun)
                                 ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
-                                ->where('user_id', $userId)
                                 ->get();
 
 

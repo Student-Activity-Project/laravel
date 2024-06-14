@@ -14,9 +14,8 @@ class AuthenticationController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'username' => ['required', 'string', 'max:255'],
-            'password' => ['required', Password::defaults()],
-            'device_name' => 'required',
+            'username' => 'required', 'max:255', 'regex:/^\S*$/', 'min:4',
+            'password' => 'required', 'min:5',
         ]);
 
         $user = User::create([
@@ -24,20 +23,9 @@ class AuthenticationController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        if(!$user || !Hash::check($request->password, $user->password)){
-            return response()->json(
-                [
-                'status' => false,
-                'token' => null,
-                'message' => 'User tidak ditemukan!',
-                ]
-            );
-        }
-
-        $token = $user->createToken($request->device_name)->plainTextToken;
         return response()->json([
             'status' => true,
-            'token' => $token,
+            'user' => $user,
             'message' => 'Register Sukses!',
         ]);
     }
@@ -45,8 +33,8 @@ class AuthenticationController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'username' => 'required',
-            'password' => 'required',
+            'username' => 'required', 'max:255', 'regex:/^\S*$/', 'min:4',
+            'password' => 'required', 'min:5',
             // 'device_name' => 'required', //untuk menentukan nama token
         ]);
         //proses cek user untuk login
@@ -135,6 +123,28 @@ class AuthenticationController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Logout Sukses!',
+        ]);
+    }
+
+    public function deleteUser($id)
+    {
+        // Get the user by ID
+        $user = User::find($id);
+
+        // Check if user exists
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User tidak ditemukan!',
+            ]);
+        }
+
+        // Attempt to delete the user
+        $user->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'User berhasil dihapus!',
         ]);
     }
 

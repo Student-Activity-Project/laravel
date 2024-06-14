@@ -18,12 +18,7 @@ class StokmobilController extends Controller
 {
     public function index()
     {
-        // Ambil data mobil berdasarkan status
-        // $listdata = Listdata::all();
-        $user_id = Auth::id();
-
-        // Ambil data mobil berdasarkan user_id pengguna yang saat ini masuk
-        $listdata = Stokmobil::where('user_id', $user_id)->get();
+        $listdata = Stokmobil::all();
 
         $listmobil = [];
 
@@ -35,6 +30,7 @@ class StokmobilController extends Controller
             $merk = Jenis::find($data->id_jenis_mobil)->nama;
 
             $listmobil[] = [
+                'user_id' => $data->user_id,
                 'id' => $data->id,
                 'nama_mobil' => $data->nama_mobil,
                 'transmisi' => $transmisi,
@@ -56,8 +52,6 @@ class StokmobilController extends Controller
 
     public function store(Request $request)
 {
-    // Validate incoming request data
-    $user_id = Auth::id();
 
     $validator = Validator::make($request->all(), [
         'nama_mobil' => 'required|min:2|max:20',
@@ -69,7 +63,7 @@ class StokmobilController extends Controller
         'nomor_polisi' => 'required|max:10',
         'harga_jual' => 'required|numeric|min:0|max:100000000000',
         'catatan_perbaikan' => 'required|max:200',
-        'foto' => 'nullable|file|image|max:5000',
+        'foto' => 'file|image|max:5000',
     ]);
 
     // Check for validation errors
@@ -88,8 +82,8 @@ class StokmobilController extends Controller
     // Create a new entry in the database
     $listdata = new Stokmobil();
     $listdata->fill($request->all());
-    $listdata->user_id = $user_id;
     $listdata->foto = $nama_file; // Store the full URL of the photo
+    $listdata->user_id = Auth::id();
     $listdata->status = 'available'; // Set the status to 'available' by default
     $listdata->save();
 
@@ -131,6 +125,7 @@ class StokmobilController extends Controller
             $merk = Jenis::find($data->id_jenis_mobil)->nama;
 
             $listmobil[] = [
+                'user_id' => $data->user_id,
                 'id' => $data->id,
                 'nama_mobil' => $data->nama_mobil,
                 'transmisi' => $transmisi,
@@ -155,7 +150,7 @@ class StokmobilController extends Controller
 
     public function update(Request $request, $id)
 {
-    $listdata = Stokmobil::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
+    $listdata = Stokmobil::findOrFail($id);
 
     $validator = Validator::make($request->all(), [
         'nama_mobil' => 'required|min:2|max:20',
@@ -189,7 +184,7 @@ class StokmobilController extends Controller
 
     public function destroy($id)
     {
-        $listdata = Stokmobil::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
+        $listdata = Stokmobil::findOrFail($id);
         $listdata->delete();
 
         return response()->json([
@@ -204,7 +199,7 @@ class StokmobilController extends Controller
     {
         // Validasi request jika diperlukan
 
-        $listdata = Stokmobil::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
+        $listdata = Stokmobil::findOrFail($id);
 
         if ($listdata) {
             $listdata->status = 'sold'; // Atur status menjadi "sold"
@@ -231,7 +226,23 @@ class StokmobilController extends Controller
         ]);
 
         // Temukan record listdata berdasarkan ID
-        $listdata = Stokmobil::where('id', $id)->where('user_id', auth()->user()->id)->firstOrFail();
+        $listdata = Stokmobil::findOrFail($id);
+        if (!Auth::check()) {
+            // Kembalikan respon JSON yang gagal jika pengguna tidak terautentikasi
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized: Anda harus login untuk mengakses fitur ini'
+            ], 401);
+        }
+
+        // Periksa apakah pengguna memiliki akses ke entitas yang akan diubah
+        if ($listdata->user_id !== Auth::id()) {
+            // Kembalikan respon JSON yang gagal jika pengguna tidak memiliki akses
+            return response()->json([
+                'status' => false,
+                'message' => 'Forbidden: Anda tidak memiliki izin untuk mengakses atau mengubah data ini'
+            ], 403);
+        }
 
         if ($listdata) {
 

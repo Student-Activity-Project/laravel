@@ -17,11 +17,9 @@ class StatistikController extends Controller
 
     public function totalUnitKeseluruhan()
     {
-        // Mendapatkan ID pengguna yang terotentikasi
-        $userId = Auth::id();
 
         // Hitung total unit mobil yang terkait dengan pengguna
-        $totalUnitKeseluruhan = Stokmobil::where('user_id', $userId)->count();
+        $totalUnitKeseluruhan = Stokmobil::count();
 
         return response()->json([
             'status' => true,
@@ -32,11 +30,9 @@ class StatistikController extends Controller
     public function totalUnitTersedia()
     {
         // Mendapatkan ID pengguna yang terotentikasi
-        $userId = Auth::id();
 
         // Hitung total unit mobil yang tersedia (statusnya 'available') dan terkait dengan pengguna
-        $totalUnitTersedia = Stokmobil::where('user_id', $userId)
-                                      ->where('status', 'available')->count();
+        $totalUnitTersedia = Stokmobil::where('status', 'available')->count();
 
         return response()->json([
             'status' => true,
@@ -46,12 +42,10 @@ class StatistikController extends Controller
 
     public function totalUnitTerjual()
     {
-        // Mendapatkan ID pengguna yang terotentikasi
-        $userId = Auth::id();
+
 
         // Hitung total unit mobil yang terjual (statusnya 'sold') dan terkait dengan pengguna
-        $totalTerjual = Stokmobil::where('user_id', $userId)
-                                ->where('status', 'sold')->count();
+        $totalTerjual = Stokmobil::where('status', 'sold')->count();
 
         return response()->json([
             'status' => true,
@@ -61,12 +55,9 @@ class StatistikController extends Controller
 
     public function totalTransmisiManual()
     {
-        // Mendapatkan ID pengguna yang terotentikasi
-        $userId = Auth::id();
 
         // Hitung total unit mobil dengan transmisi manual dan terkait dengan pengguna
-        $totalUnitManual = Stokmobil::where('user_id', $userId)
-                                   ->where('transmisi', 'manual')->count();
+        $totalUnitManual = Stokmobil::where('transmisi', 'manual')->count();
 
         return response()->json([
             'status' => true,
@@ -76,12 +67,9 @@ class StatistikController extends Controller
 
     public function totalTransmisiMatic()
     {
-        // Mendapatkan ID pengguna yang terotentikasi
-        $userId = Auth::id();
 
         // Hitung total unit mobil dengan transmisi matic dan terkait dengan pengguna
-        $totalUnitMatic = Stokmobil::where('user_id', $userId)
-                                  ->where('transmisi', 'matic')->count();
+        $totalUnitMatic = Stokmobil::where('transmisi', 'matic')->count();
 
         return response()->json([
             'status' => true,
@@ -91,14 +79,10 @@ class StatistikController extends Controller
 
     public function getTotalPenjualan()
     {
-        // Mendapatkan ID pengguna yang terotentikasi
-        $userId = Auth::id();
 
         // Query untuk menghitung total penjualan terkait dengan pengguna
-        $totalSales = Stokmobil::where('user_id', $userId)
-                              ->where('status', 'sold')->sum('harga_jual');
-        $totalUnitSold = Stokmobil::where('user_id', $userId)
-                                 ->where('status', 'sold')->count();
+        $totalSales = Stokmobil::where('status', 'sold')->sum('harga_jual');
+        $totalUnitSold = Stokmobil::where('status', 'sold')->count();
 
         // Format total penjualan dengan tanda titik sebagai pemisah ribuan
         $formattedTotalSales = number_format($totalSales, 0, ',', '.');
@@ -113,9 +97,6 @@ class StatistikController extends Controller
 
     public function getTotalPenjualanTanggal(Request $request)
     {
-        // Mendapatkan ID pengguna yang terotentikasi
-        $userId = Auth::id();
-
         // Validasi permintaan
         $request->validate([
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
@@ -127,11 +108,9 @@ class StatistikController extends Controller
         $tanggalAkhir = $request->input('tanggal_akhir');
 
         // Query untuk menghitung total penjualan dan jumlah unit mobil terjual berdasarkan tanggal dan pengguna
-        $totalSales = Stokmobil::where('user_id', $userId)
-                              ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+        $totalSales = Stokmobil::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
                               ->where('status', 'sold')->sum('harga_jual');
-        $totalUnitSold = Stokmobil::where('user_id', $userId)
-                                 ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+        $totalUnitSold = Stokmobil::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
                                  ->where('status', 'sold')->count();
 
         // Format total penjualan dengan tanda titik sebagai pemisah ribuan
