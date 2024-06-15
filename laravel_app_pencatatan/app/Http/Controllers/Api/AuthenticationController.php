@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class AuthenticationController extends Controller
 {
+    use HasApiTokens, Notifiable, SoftDeletes;
     public function register(Request $request)
     {
         $request->validate([
@@ -56,6 +62,7 @@ class AuthenticationController extends Controller
             [
             'status' => true,
             'token' => $token,
+            'username' => $user->username,
             'user_id' => $user->id,
             'message' => 'Login Sukses!',
             ]
@@ -147,5 +154,26 @@ class AuthenticationController extends Controller
             'message' => 'User berhasil dihapus!',
         ]);
     }
+    public function restoreUser($id)
+{
+    // Get the soft deleted user by ID
+    $user = User::onlyTrashed()->find($id);
+
+    // Check if user exists
+    if (!$user) {
+        return response()->json([
+            'status' => false,
+            'message' => 'User tidak ditemukan!',
+        ]);
+    }
+
+    // Attempt to restore the user
+    $user->restore();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'User berhasil dikembalikan!',
+    ]);
+}
 
 }

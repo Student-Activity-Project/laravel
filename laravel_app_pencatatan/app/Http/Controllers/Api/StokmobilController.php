@@ -222,7 +222,7 @@ class StokmobilController extends Controller
 
         // Validasi permintaan untuk memastikan 'foto' ada
         $request->validate([
-            'foto' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'foto' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5000',
         ]);
 
         // Temukan record listdata berdasarkan ID
