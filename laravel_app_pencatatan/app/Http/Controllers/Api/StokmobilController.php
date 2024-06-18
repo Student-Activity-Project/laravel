@@ -54,15 +54,15 @@ class StokmobilController extends Controller
 {
 
     $validator = Validator::make($request->all(), [
-        'nama_mobil' => 'required|min:2|max:20',
+        'nama_mobil' => 'required|min:2|max:20|regex:/^[a-zA-Z0-9][a-zA-Z0-9 ]*$/',
         'transmisi' => 'required',
         'id_jenis_mobil' => 'required',
         'tanggal_beli' => 'required|date|date_format:Y-m-d',
-        'tahun_mobil' => 'required|integer|min:1900|max:' . date('Y'),
+        'tahun_mobil' => 'required|integer|min:1900|max:' . date('Y') . '|regex:/^\d{4}$/',
         'id_warna_mobil' => 'required',
-        'nomor_polisi' => 'required|max:10',
-        'harga_jual' => 'required|numeric|min:0|max:100000000000',
-        'catatan_perbaikan' => 'required|max:200',
+        'nomor_polisi' => 'required|max:10|regex:/^[A-Z]{1,2} \d{1,4} [A-Z]{1,3}$/',
+        'harga_jual' => 'required|numeric|min:0|max:100000000000|regex:/^\d+$/',
+        'catatan_perbaikan' => 'required|max:200|regex:/^[a-zA-Z0-9\s]*$/',
         'foto' => 'file|image|max:5000',
     ]);
 
@@ -153,15 +153,15 @@ class StokmobilController extends Controller
     $listdata = Stokmobil::findOrFail($id);
 
     $validator = Validator::make($request->all(), [
-        'nama_mobil' => 'required|min:2|max:20',
+        'nama_mobil' => 'required|min:2|max:20|regex:/^[a-zA-Z0-9][a-zA-Z0-9 ]*$/',
         'transmisi' => 'required',
         'id_jenis_mobil' => 'required',
         'tanggal_beli' => 'required|date|date_format:Y-m-d',
-        'tahun_mobil' => 'required|integer|min:1900|max:' . date('Y'),
+        'tahun_mobil' => 'required|integer|min:1900|max:' . date('Y') . '|regex:/^\d{4}$/',
         'id_warna_mobil' => 'required',
-        'nomor_polisi' => 'required|max:10',
-        'harga_jual' => 'required|numeric|min:0|max:100000000000',
-        'catatan_perbaikan' => 'required|max:200',
+        'nomor_polisi' => 'required|max:10|regex:/^[A-Z]{1,2} \d{1,4} [A-Z]{1,3}$/',
+        'harga_jual' => 'required|numeric|min:0|max:100000000000|regex:/^\d+$/',
+        'catatan_perbaikan' => 'required|max:200|regex:/^[a-zA-Z0-9\s]*$/',
     ]);
 
     if ($validator->fails()) {

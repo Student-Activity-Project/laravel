@@ -9,6 +9,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -19,126 +20,170 @@ class AuthenticationController extends Controller
     use HasApiTokens, Notifiable, SoftDeletes;
     public function register(Request $request)
     {
-        $request->validate([
-            'username' => 'required', 'max:255', 'regex:/^\S*$/', 'min:4',
-            'password' => 'required', 'min:5',
-        ]);
+        $rules = [
+            'username' => ['required', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+            'password' => ['required', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+        ];
 
-        $user = User::create([
-            'username' => $request->username,
-            'password' => Hash::make($request->password),
-        ]);
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
 
-        return response()->json([
-            'status' => true,
-            'user' => $user,
-            'message' => 'Register Sukses!',
-        ]);
+        try {
+            $user = User::create([
+                'username' => $request->username,
+                'password' => Hash::make($request->password),
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'user' => $user,
+                'message' => 'Register Sukses!',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Register Gagal! ' . $e->getMessage(),
+            ]);
+        }
     }
 
     public function login(Request $request)
     {
-        $request->validate([
-            'username' => 'required', 'max:255', 'regex:/^\S*$/', 'min:4',
-            'password' => 'required', 'min:5',
-            // 'device_name' => 'required', //untuk menentukan nama token
-        ]);
-        //proses cek user untuk login
-        $user = User::where("username", $request->username)->first();
-        if(!$user || !Hash::check($request->password, $user->password)){
-            return response()->json(
-                [
+        $rules = [
+            'username' => ['required', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+            'password' => ['required', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+        ];
+
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json([
                 'status' => false,
-                'token' => null,
-                'message' => 'User Tidak Ditemukan/Password Salah!',
-                ]
-            );
+                'message' => $validator->errors()->first(),
+            ]);
         }
 
-        //generate user acces token
-        $token = $user->createToken($request->password)->plainTextToken; //all ability
-        // $token = $user->createToken($request->device_name, ['prodi:create', 'prodi:delete'])->plainTextToken; //khusus create n delete
-        return response()->json(
-            [
-            'status' => true,
-            'token' => $token,
-            'username' => $user->username,
-            'user_id' => $user->id,
-            'message' => 'Login Sukses!',
-            ]
-        );
+        try {
+            $user = User::where("username", $request->username)->first();
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'status' => false,
+                    'token' => null,
+                    'message' => 'User Tidak Ditemukan/Password Salah!',
+                ]);
+            }
+
+            $token = $user->createToken($request->password)->plainTextToken;
+
+            return response()->json([
+                'status' => true,
+                'token' => $token,
+                'username' => $user->username,
+                'user_id' => $user->id,
+                'message' => 'Login Sukses!',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Login Gagal! ' . $e->getMessage(),
+            ]);
+        }
     }
 
     public function updateUser(Request $request, string $id)
-{
-
-    // Validate the incoming request data
-    $validate = $request->validate([
-        'username' => ['required', 'string', 'max:50'],
-        'password' => ['required', 'string', 'min:5'], // adjust rules as needed
-    ]);
-
-    // Get the user by ID
-    $user = User::find($id);
-
-    // Check if user exists
-    if (!$user) {
-        return response()->json([
-            'kode' => 0,
-            'pesan' => "User not found",
-        ]);
-    }
-
-    // Prepare data for update
-    $data = [];
-
-    // Check if username is present in the request and update it
-    if ($request->has('username')) {
-        $data['username'] = $request->username;
-    }
-
-    // If password is present, hash it and update
-    if ($request->has('password')) {
-        $data['password'] = Hash::make($request->password);
-    }
-
-    // Attempt to update the user
-    $updated = User::where('id', $id)->first();
-    $updated->username = $validate['username'];
-    $updated->password = Hash::make($request->password);
-    $updated -> save();
-
-    // Check if update was successful
-    if ($updated) {
-        return response()->json([
-            'kode' => 1,
-            'pesan' => "Sukses Mengupdate Data",
-            'data' => $updated // return updated user data
-        ]);
-    } else {
-        return response()->json([
-            'kode' => 0,
-            'pesan' => "Gagal Mengupdate Data",
-        ]);
-    }
-}
-
-    public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $rules = [
+            'username' => ['string', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+            'password' => ['string', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+        ];
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Logout Sukses!',
-        ]);
-    }
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
 
-    public function deleteUser($id)
-    {
         // Get the user by ID
         $user = User::find($id);
 
         // Check if user exists
+        if (!$user) {
+            return response()->json([
+                'kode' => 0,
+                'pesan' => "User tidak ditemukan",
+            ]);
+        }
+
+        // Prepare data for update
+        $data = [];
+
+        // Check if username is present in the request and update it
+        if ($request->has('username')) {
+            // Check if the new username is already taken by another user
+            if ($request->username !== $user->username) {
+                $existingUser = User::where('username', $request->username)->first();
+                if ($existingUser) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Username Sudah Ada!',
+                    ]);
+                }
+            }
+            $data['username'] = $request->username;
+        }
+
+        // If password is present, hash it and update
+        if ($request->has('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        try {
+            // Attempt to update the user
+            $user->update($data);
+
+            return response()->json([
+                'status' => true,
+                'message' => "User Berhasil Diupdate!",
+                'data' => $user
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Gagal Mengupdate User! " . $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function logout(Request $request)
+    {
+        try {
+            $request->user()->currentAccessToken()->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Logout Sukses!',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Logout Gagal! ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function deleteUser($id)
+    {
+        $user = User::find($id);
+
         if (!$user) {
             return response()->json([
                 'status' => false,
@@ -146,34 +191,45 @@ class AuthenticationController extends Controller
             ]);
         }
 
-        // Attempt to delete the user
-        $user->delete();
+        try {
+            $user->delete();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'User berhasil dihapus!',
-        ]);
+            return response()->json([
+                'status' => true,
+                'message' => 'User berhasil dihapus!',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menghapus user! ' . $e->getMessage(),
+            ]);
+        }
     }
+
     public function restoreUser($id)
-{
-    // Get the soft deleted user by ID
-    $user = User::onlyTrashed()->find($id);
+    {
+        $user = User::onlyTrashed()->find($id);
 
-    // Check if user exists
-    if (!$user) {
-        return response()->json([
-            'status' => false,
-            'message' => 'User tidak ditemukan!',
-        ]);
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User tidak ditemukan!',
+            ]);
+        }
+
+        try {
+            $user->restore();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'User berhasil dikembalikan!',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal mengembalikan user! ' . $e->getMessage(),
+            ]);
+        }
     }
-
-    // Attempt to restore the user
-    $user->restore();
-
-    return response()->json([
-        'status' => true,
-        'message' => 'User berhasil dikembalikan!',
-    ]);
-}
 
 }
