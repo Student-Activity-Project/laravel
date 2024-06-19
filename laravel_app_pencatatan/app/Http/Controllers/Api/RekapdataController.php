@@ -23,7 +23,7 @@ class RekapdataController extends Controller
         // Validasi permintaan
         $request->validate([
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
-            'tanggal_akhir' => 'required|date|date_format:Y-m-d',
+            'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
         ]);
 
         // Ambil tanggal awal dan tanggal akhir dari permintaan
@@ -68,7 +68,7 @@ class RekapdataController extends Controller
         $request->validate([
             'merk' => 'required|string', // Pastikan 'merk' adalah string yang diperlukan
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
-            'tanggal_akhir' => 'required|date|date_format:Y-m-d',
+            'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
         ]);
 
         // Ambil tanggal awal dan tanggal akhir dari permintaan
@@ -138,7 +138,7 @@ class RekapdataController extends Controller
         $request->validate([
             'transmisi' => 'required|string', // Pastikan 'transmisi' adalah string yang diperlukan
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
-            'tanggal_akhir' => 'required|date|date_format:Y-m-d',
+            'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
         ]);
 
         // Ambil tanggal awal dan tanggal akhir dari permintaan
@@ -206,7 +206,7 @@ class RekapdataController extends Controller
         $request->validate([
             'tahun' => 'required', // Pastikan 'tahun' adalah integer yang diperlukan
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
-            'tanggal_akhir' => 'required|date|date_format:Y-m-d',
+            'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
         ]);
 
         // Ambil tanggal awal dan tanggal akhir dari permintaan

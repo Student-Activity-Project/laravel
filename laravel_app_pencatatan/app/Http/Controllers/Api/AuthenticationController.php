@@ -34,6 +34,15 @@ class AuthenticationController extends Controller
             ]);
         }
 
+        // Check if the username already exists including soft-deleted users
+        $existingUser = User::withTrashed()->where('username', $request->username)->first();
+        if ($existingUser) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Username Sudah Digunakan!',
+            ]);
+        }
+
         try {
             $user = User::create([
                 'username' => $request->username,
@@ -70,7 +79,11 @@ class AuthenticationController extends Controller
         }
 
         try {
-            $user = User::where("username", $request->username)->first();
+            // Check if user exists and is not soft deleted
+            $user = User::where('username', $request->username)
+                        ->whereNull('deleted_at')
+                        ->first();
+
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'status' => false,
@@ -208,7 +221,7 @@ class AuthenticationController extends Controller
 
     public function restoreUser($id)
     {
-        $user = User::onlyTrashed()->find($id);
+        $user = User::withTrashed()->find($id);
 
         if (!$user) {
             return response()->json([
