@@ -63,7 +63,7 @@ class StokmobilController extends Controller
         'nomor_polisi' => 'required|max:10|regex:/^[A-Z]{1,2} \d{1,4} [A-Z]{1,3}$/',
         'harga_jual' => 'required|numeric|min:0|max:100000000000|regex:/^\d+$/',
         'catatan_perbaikan' => 'required|max:200|regex:/^[a-zA-Z0-9\s]*$/',
-        'foto' => 'file|image|max:5000',
+        'foto' => 'required|file|image|max:5000',
     ]);
 
     // Check for validation errors

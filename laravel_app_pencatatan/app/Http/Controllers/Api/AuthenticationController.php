@@ -21,8 +21,8 @@ class AuthenticationController extends Controller
     public function register(Request $request)
     {
         $rules = [
-            'username' => ['required', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
-            'password' => ['required', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+            'username' => ['required', 'max:25', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+            'password' => ['required', 'max:25', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
         ];
 
         // Validate the incoming request data
@@ -65,8 +65,8 @@ class AuthenticationController extends Controller
     public function login(Request $request)
     {
         $rules = [
-            'username' => ['required', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
-            'password' => ['required', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+            'username' => ['required', 'max:25', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+            'password' => ['required', 'max:25', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
         ];
 
         // Validate the incoming request data
@@ -84,13 +84,21 @@ class AuthenticationController extends Controller
                         ->whereNull('deleted_at')
                         ->first();
 
-            if (!$user || !Hash::check($request->password, $user->password)) {
-                return response()->json([
-                    'status' => false,
-                    'token' => null,
-                    'message' => 'User Tidak Ditemukan/Password Salah!',
-                ]);
-            }
+                        if (!$user) {
+                            return response()->json([
+                                'status' => false,
+                                'token' => null,
+                                'message' => 'Username Tidak Ditemukan!',
+                            ]);
+                        }
+
+                        if (!Hash::check($request->password, $user->password)) {
+                            return response()->json([
+                                'status' => false,
+                                'token' => null,
+                                'message' => 'Password Salah!',
+                            ]);
+                        }
 
             $token = $user->createToken($request->password)->plainTextToken;
 
@@ -112,8 +120,8 @@ class AuthenticationController extends Controller
     public function updateUser(Request $request, string $id)
     {
         $rules = [
-            'username' => ['string', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
-            'password' => ['string', 'max:50', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+            'username' => ['string', 'max:25', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
+            'password' => ['string', 'max:25', 'regex:/^[a-zA-Z0-9_]*$/', 'min:4'],
         ];
 
         // Validate the incoming request data

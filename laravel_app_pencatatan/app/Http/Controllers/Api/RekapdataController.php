@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\RekapData;
 use App\Models\Stokmobil;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Warna;
 use App\Models\Jenis;
 
@@ -20,46 +21,61 @@ class RekapdataController extends Controller
      */
     public function dataListByDateRange(Request $request)
     {
-        // Validasi permintaan
-        $request->validate([
+        // Validate the request
+        $validator = Validator::make($request->all(), [
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
             'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
         ]);
 
-        // Ambil tanggal awal dan tanggal akhir dari permintaan
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
+
+        // Retrieve the start and end dates from the request
         $tanggalAwal = $request->input('tanggal_awal');
         $tanggalAkhir = $request->input('tanggal_akhir');
 
-        // Query untuk mendapatkan daftar data berdasarkan jangkauan tanggal
-        $transaksis = Stokmobil::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])->get();
+        try {
+            // Query to get the list of data based on the date range
+            $transaksis = Stokmobil::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])->get();
 
-        $listTransaksi = [];
+            $listTransaksi = [];
 
-        // Loop melalui setiap transaksi untuk memformat data dan mengambil URL foto
-        foreach ($transaksis as $data) {
-            $fotoUrl = asset('storage/' . $data->foto); // Mendapatkan URL foto dari field 'foto'
-            $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
-            $warna = Warna::find($data->id_warna_mobil)->nama;
-            $merk = Jenis::find($data->id_jenis_mobil)->nama;
-            $listTransaksi[] = [
-                'id' => $data->id,
-                'nama_mobil' => $data->nama_mobil,
-                'transmisi' => $transmisi,
-                'id_jenis_mobil' => $merk,
-                'tanggal_beli' => $data->tanggal_beli,
-                'tahun_mobil' => $data->tahun_mobil,
-                'id_warna_mobil' => $warna,
-                'nomor_polisi' => $data->nomor_polisi,
-                'harga_jual' => $data->harga_jual,
-                'catatan_perbaikan' => $data->catatan_perbaikan,
-                'foto' => $fotoUrl, // Menambahkan URL foto ke respons
-            ];
+            // Loop through each transaction to format the data and get the photo URL
+            foreach ($transaksis as $data) {
+                $fotoUrl = asset('storage/' . $data->foto); // Get the photo URL from the 'foto' field
+                $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
+                $warna = Warna::find($data->id_warna_mobil)->nama;
+                $merk = Jenis::find($data->id_jenis_mobil)->nama;
+
+                $listTransaksi[] = [
+                    'id' => $data->id,
+                    'nama_mobil' => $data->nama_mobil,
+                    'transmisi' => $transmisi,
+                    'id_jenis_mobil' => $merk,
+                    'tanggal_beli' => $data->tanggal_beli,
+                    'tahun_mobil' => $data->tahun_mobil,
+                    'id_warna_mobil' => $warna,
+                    'nomor_polisi' => $data->nomor_polisi,
+                    'harga_jual' => $data->harga_jual,
+                    'catatan_perbaikan' => $data->catatan_perbaikan,
+                    'foto' => $fotoUrl, // Add the photo URL to the response
+                ];
+            }
+
+            return response()->json([
+                'status' => true,
+                'data_tanggal' => $listTransaksi, // Send the transaction data with the photo URL
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error retrieving data: ' . $e->getMessage(),
+            ]);
         }
-
-        return response()->json([
-            'status' => true,
-            'data_tanggal' => $listTransaksi, // Mengirim data transaksi dengan URL foto
-        ]);
     }
 
     public function dataListByMerk(Request $request)
