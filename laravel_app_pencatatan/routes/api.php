@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthenticationController::class, 'register']);
 Route::post('/login', [AuthenticationController::class, 'login']);
-Route::get('/deleteUser/{id}', [AuthenticationController::class, 'deleteUser']);
+Route::delete('/deleteUser/{id}', [AuthenticationController::class, 'deleteUser']);
 Route::get('/restoreUser/{id}', [AuthenticationController::class, 'restoreUser']);
 
 Route::group(['middleware' => ['auth:sanctum']], function(){

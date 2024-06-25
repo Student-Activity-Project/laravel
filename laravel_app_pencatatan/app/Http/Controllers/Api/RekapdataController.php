@@ -138,7 +138,7 @@ class RekapdataController extends Controller
                 'status' => true,
                 'data_merk' => $listTransaksi,
                 'total_unit' => $totalUnitMobil,
-                'message' => 'Data Transaksi ditemukan',
+                'message' => 'Data Transaksi Ditemukan',
             ]);
         } else {
             return response()->json([

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Models\Stokmobil;
 use App\Models\Warna;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\User;
 use App\Models\Jenis;
 use App\Models\Transaksi;
@@ -46,7 +47,7 @@ class StokmobilController extends Controller
             ];
         }
 
-        return response()->json(['data' => $listmobil], 200);
+        return response()->json(['data' => $listmobil, 'message' => 'Mobil Berhasil Di-Load'], 200);
     }
 
 
@@ -73,7 +74,25 @@ class StokmobilController extends Controller
             'message' => $validator->errors()->first(),
         ]);
     }
+    // Cek apakah mobil dengan atribut yang sama sudah ada dalam database
+    $existingCar = Stokmobil::where('nama_mobil', $request->nama_mobil)
+                             ->where('transmisi', $request->transmisi)
+                             ->where('id_jenis_mobil', $request->id_jenis_mobil)
+                             ->where('tanggal_beli', $request->tanggal_beli)
+                             ->where('tahun_mobil', $request->tahun_mobil)
+                             ->where('id_warna_mobil', $request->id_warna_mobil)
+                             ->where('nomor_polisi', $request->nomor_polisi)
+                             ->where('harga_jual', $request->harga_jual)
+                             ->where('catatan_perbaikan', $request->catatan_perbaikan)
+                             ->exists();
 
+    // Jika mobil dengan atribut yang sama sudah ada, kembalikan respons JSON dengan pesan error
+    if ($existingCar) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Data Mobil sudah ada dalam database',
+        ]);
+    }
     // Store the uploaded photo in the 'public' storage
     $ext = $request->foto->getClientOriginalExtension();
     $nama_file = "foto-" . time() . "." . $ext;
@@ -149,81 +168,112 @@ class StokmobilController extends Controller
     }
 
     public function update(Request $request, $id)
-{
-    $listdata = Stokmobil::findOrFail($id);
-
-    $validator = Validator::make($request->all(), [
-        'nama_mobil' => 'required|min:2|max:20|regex:/^[a-zA-Z0-9][a-zA-Z0-9 ]*$/',
-        'transmisi' => 'required',
-        'id_jenis_mobil' => 'required',
-        'tanggal_beli' => 'required|date|date_format:Y-m-d',
-        'tahun_mobil' => 'required|integer|min:1900|max:' . date('Y') . '|regex:/^\d{4}$/',
-        'id_warna_mobil' => 'required',
-        'nomor_polisi' => 'required|max:10|regex:/^[A-Z]{1,2} \d{1,4} [A-Z]{1,3}$/',
-        'harga_jual' => 'required|numeric|min:0|max:100000000000|regex:/^\d+$/',
-        'catatan_perbaikan' => 'required|max:200|regex:/^[a-zA-Z0-9\s]*$/',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => false,
-            'message' => $validator->errors()->first(),
-        ]);
-    }
-
-    // Isi model Listdata dengan data yang diperbarui
-    $listdata->fill($request->all());
-    $listdata->save();
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Data Mobil berhasil diupdate',
-        'data' => $listdata,
-    ]);
-}
-
-    public function destroy($id)
     {
-        $listdata = Stokmobil::findOrFail($id);
-        $listdata->delete();
+
+        try {
+            $listdata = Stokmobil::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data Mobil tidak ditemukan',
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'nama_mobil' => 'required|min:2|max:20|regex:/^[a-zA-Z0-9][a-zA-Z0-9 ]*$/',
+            'transmisi' => 'required',
+            'id_jenis_mobil' => 'required',
+            'tanggal_beli' => 'required|date|date_format:Y-m-d',
+            'tahun_mobil' => 'required|integer|min:1900|max:' . date('Y') . '|regex:/^\d{4}$/',
+            'id_warna_mobil' => 'required',
+            'nomor_polisi' => 'required|max:10|regex:/^[A-Z]{1,2} \d{1,4} [A-Z]{1,3}$/',
+            'harga_jual' => 'required|numeric|min:0|max:100000000000|regex:/^\d+$/',
+            'catatan_perbaikan' => 'required|max:200|regex:/^[a-zA-Z0-9\s]*$/',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
+
+        // Isi model Listdata dengan data yang diperbarui
+        $listdata->fill($request->all());
+        $listdata->save();
 
         return response()->json([
             'status' => true,
-            'message' => 'Data Mobil berhasil dihapus',
-            'data' => null, // Tidak perlu mengirim data kembali setelah dihapus
+            'message' => 'Data Mobil berhasil diupdate',
+            'data' => $listdata,
         ]);
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $listdata = Stokmobil::findOrFail($id);
+            $listdata->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Data Mobil berhasil dihapus',
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data Mobil tidak ditemukan',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan saat menghapus data mobil',
+            ], 500);
+        }
     }
 
 
     public function updateStatus($id)
     {
-        // Validasi request jika diperlukan
+        try {
+            $listdata = Stokmobil::findOrFail($id);
 
-        $listdata = Stokmobil::findOrFail($id);
-
-        if ($listdata) {
-            $listdata->status = 'sold'; // Atur status menjadi "sold"
+            $listdata->status = 'sold'; // Set status to "sold"
             $listdata->save();
 
             return response()->json([
                 'status' => true,
                 'message' => 'Mobil Berhasil Dijual',
-                'data' => $listdata // (Opsional) Kirim kembali data mobil yang telah diperbarui
+                'data' => $listdata // Optional: Return the updated car data
             ]);
-        } else {
+
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Mobil Gagal Dijual',
+                'message' => 'Mobil tidak ditemukan',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan saat menjual mobil',
             ]);
         }
     }
 
     public function updateFoto(Request $request, $id) {
 
-        // Validasi permintaan untuk memastikan 'foto' ada
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'foto' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5000',
         ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
+
 
         // Temukan record listdata berdasarkan ID
         $listdata = Stokmobil::findOrFail($id);
@@ -232,7 +282,7 @@ class StokmobilController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Unauthorized: Anda harus login untuk mengakses fitur ini'
-            ], 401);
+            ]);
         }
 
         // Periksa apakah pengguna memiliki akses ke entitas yang akan diubah
@@ -241,7 +291,7 @@ class StokmobilController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Forbidden: Anda tidak memiliki izin untuk mengakses atau mengubah data ini'
-            ], 403);
+            ]);
         }
 
         if ($listdata) {
@@ -262,14 +312,14 @@ class StokmobilController extends Controller
                 'status' => true,
                 'message' => 'Sukses Mengubah Data',
                 'data' => $listdata
-            ], 200);
+            ]);
         } else {
 
             // Kembalikan respon JSON yang gagal jika record tidak ditemukan
             return response()->json([
                 'status' => false,
                 'message' => 'Gagal Mengubah Data, Record Tidak Ditemukan'
-            ], 404);
+            ]);
         }
     }
 
