@@ -21,7 +21,7 @@ class RekapdataController extends Controller
      */
     public function dataListByDateRange(Request $request)
     {
-        // Validate the request
+        // Validasi permintaan
         $validator = Validator::make($request->all(), [
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
             'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
@@ -31,22 +31,31 @@ class RekapdataController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => $validator->errors()->first(),
+                'data_tanggal' => null,
             ]);
         }
 
-        // Retrieve the start and end dates from the request
+        // Ambil tanggal awal dan tanggal akhir dari permintaan
         $tanggalAwal = $request->input('tanggal_awal');
         $tanggalAkhir = $request->input('tanggal_akhir');
 
         try {
-            // Query to get the list of data based on the date range
+            // Query untuk mendapatkan daftar data berdasarkan jangkauan tanggal
             $transaksis = Stokmobil::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])->get();
+
+            if ($transaksis->isEmpty()) {
+                return response()->json([
+                    'status' => false,
+                    'data_tanggal' => null,
+                    'message' => 'Belum Ada Transaksi Di Tanggal Tersebut',
+                ]);
+            }
 
             $listTransaksi = [];
 
-            // Loop through each transaction to format the data and get the photo URL
+            // Loop melalui setiap transaksi untuk memformat data dan mengambil URL foto
             foreach ($transaksis as $data) {
-                $fotoUrl = asset('storage/' . $data->foto); // Get the photo URL from the 'foto' field
+                $fotoUrl = asset('storage/' . $data->foto); // Mendapatkan URL foto dari field 'foto'
                 $transmisi = $data->transmisi === 'manual' ? 'Manual' : 'Matic';
                 $warna = Warna::find($data->id_warna_mobil)->nama;
                 $merk = Jenis::find($data->id_jenis_mobil)->nama;
@@ -62,30 +71,43 @@ class RekapdataController extends Controller
                     'nomor_polisi' => $data->nomor_polisi,
                     'harga_jual' => $data->harga_jual,
                     'catatan_perbaikan' => $data->catatan_perbaikan,
-                    'foto' => $fotoUrl, // Add the photo URL to the response
+                    'foto' => $fotoUrl, // Menambahkan URL foto ke respons
                 ];
             }
 
             return response()->json([
                 'status' => true,
-                'data_tanggal' => $listTransaksi, // Send the transaction data with the photo URL
+                'data_tanggal' => $listTransaksi,
+                'message' => 'Data Transaksi Ditemukan',
             ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Error retrieving data: ' . $e->getMessage(),
+                'data_tanggal' => null,
             ]);
         }
+
     }
 
     public function dataListByMerk(Request $request)
     {
         // Validasi permintaan
-        $request->validate([
+        $rules = [
             'merk' => 'required|string', // Pastikan 'merk' adalah string yang diperlukan
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
             'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
-        ]);
+        ];
+        $validator = Validator::make($request->all(), $rules);
+        if($validator->fails()){
+            return response()->json([
+                'status' => false,
+                'data_merk' => null,
+                'total_unit' => 0,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
 
         // Ambil tanggal awal dan tanggal akhir dari permintaan
         $tanggalAwal = $request->input('tanggal_awal');
@@ -150,12 +172,25 @@ class RekapdataController extends Controller
 
     public function dataListByTransmisi(Request $request)
     {
-        // Validasi permintaan
-        $request->validate([
+        // Aturan validasi
+        $rules = [
             'transmisi' => 'required|string', // Pastikan 'transmisi' adalah string yang diperlukan
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
             'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
-        ]);
+        ];
+
+        // Validasi permintaan
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            // Jika validasi gagal, kembalikan respons dengan pesan kesalahan
+            return response()->json([
+                'status' => false,
+                'data_transmisi' => null,
+                'total_unit' => 0,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
 
         // Ambil tanggal awal dan tanggal akhir dari permintaan
         $tanggalAwal = $request->input('tanggal_awal');
@@ -218,12 +253,25 @@ class RekapdataController extends Controller
 
     public function dataListByTahun(Request $request)
     {
+        // Aturan validasi
+        $rules = [
+            'tahun' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
+            'tanggal_awal' => ['required', 'date', 'date_format:Y-m-d'],
+            'tanggal_akhir' => ['required', 'date', 'date_format:Y-m-d', 'after_or_equal:tanggal_awal'],
+        ];
+
         // Validasi permintaan
-        $request->validate([
-            'tahun' => 'required', // Pastikan 'tahun' adalah integer yang diperlukan
-            'tanggal_awal' => 'required|date|date_format:Y-m-d',
-            'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
-        ]);
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            // Jika validasi gagal, kembalikan respons dengan pesan kesalahan
+            return response()->json([
+                'status' => false,
+                'data_tahun' => null,
+                'total_unit' => 0,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
 
         // Ambil tanggal awal dan tanggal akhir dari permintaan
         $tanggalAwal = $request->input('tanggal_awal');

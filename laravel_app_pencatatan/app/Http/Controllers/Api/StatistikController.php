@@ -5,6 +5,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Stokmobil;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 
 class StatistikController extends Controller
@@ -42,8 +43,6 @@ class StatistikController extends Controller
 
     public function totalUnitTerjual()
     {
-
-
         // Hitung total unit mobil yang terjual (statusnya 'sold') dan terkait dengan pengguna
         $totalTerjual = Stokmobil::where('status', 'sold')->count();
 
@@ -98,10 +97,12 @@ class StatistikController extends Controller
     public function getTotalPenjualanTanggal(Request $request)
     {
         // Validasi permintaan
-        $request->validate([
+        $rules = ([
             'tanggal_awal' => 'required|date|date_format:Y-m-d',
             'tanggal_akhir' => 'required|date|date_format:Y-m-d|after_or_equal:tanggal_awal',
         ]);
+
+        $validator = Validator::make($request->all(), $rules);
 
         // Ambil tanggal awal dan akhir dari permintaan
         $tanggalAwal = $request->input('tanggal_awal');
@@ -116,11 +117,21 @@ class StatistikController extends Controller
         // Format total penjualan dengan tanda titik sebagai pemisah ribuan
         $formattedTotalSales = number_format($totalSales, 0, ',', '.');
 
-        return response()->json([
-            'status' => true,
-            'total_penjualan' => $formattedTotalSales,
-            'total_unit_terjual' => $totalUnitSold,
-            'message' => 'Total penjualan dan jumlah unit terjual berhasil diambil berdasarkan tanggal',
-        ]);
+        if($validator->fails()){
+            return response()->json([
+                'status' => false,
+                'total_penjualan' => 0,
+                'total_unit_terjual' => 0,
+                'message' => $validator->errors()->first(),
+            ]);
+        }else{
+            return response()->json([
+                'status' => true,
+                'total_penjualan' => $formattedTotalSales,
+                'total_unit_terjual' => $totalUnitSold,
+                'message' => 'Total penjualan dan jumlah unit terjual berhasil diambil berdasarkan tanggal',
+            ]);
+        }
+
     }
 }

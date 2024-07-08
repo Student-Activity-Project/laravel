@@ -29,6 +29,7 @@ return new class extends Migration
             ['id' => '6', 'nama' => 'Putih'],
             ['id' => '7', 'nama' => 'Coklat'],
             ['id' => '8', 'nama' => 'Biru Muda'],
+            ['id' => '9', 'nama' => 'Abu-abu'],
         ]);
     }
 

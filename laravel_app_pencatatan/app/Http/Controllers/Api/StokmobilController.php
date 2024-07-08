@@ -55,7 +55,7 @@ class StokmobilController extends Controller
 {
 
     $validator = Validator::make($request->all(), [
-        'nama_mobil' => 'required|min:2|max:20|regex:/^[a-zA-Z0-9][a-zA-Z0-9 ]*$/',
+        'nama_mobil' => 'required|min:2|max:25|regex:/^[a-zA-Z0-9][a-zA-Z0-9 . ]*$/',
         'transmisi' => 'required',
         'id_jenis_mobil' => 'required',
         'tanggal_beli' => 'required|date|date_format:Y-m-d',
@@ -78,12 +78,12 @@ class StokmobilController extends Controller
     $existingCar = Stokmobil::where('nama_mobil', $request->nama_mobil)
                              ->where('transmisi', $request->transmisi)
                              ->where('id_jenis_mobil', $request->id_jenis_mobil)
-                             ->where('tanggal_beli', $request->tanggal_beli)
+                            //  ->where('tanggal_beli', $request->tanggal_beli)
                              ->where('tahun_mobil', $request->tahun_mobil)
                              ->where('id_warna_mobil', $request->id_warna_mobil)
                              ->where('nomor_polisi', $request->nomor_polisi)
-                             ->where('harga_jual', $request->harga_jual)
-                             ->where('catatan_perbaikan', $request->catatan_perbaikan)
+                            //  ->where('harga_jual', $request->harga_jual)
+                            //  ->where('catatan_perbaikan', $request->catatan_perbaikan)
                              ->exists();
 
     // Jika mobil dengan atribut yang sama sudah ada, kembalikan respons JSON dengan pesan error
@@ -180,7 +180,7 @@ class StokmobilController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nama_mobil' => 'required|min:2|max:20|regex:/^[a-zA-Z0-9][a-zA-Z0-9 ]*$/',
+            'nama_mobil' => 'required|min:2|max:25|regex:/^[a-zA-Z0-9][a-zA-Z0-9 .]*$/',
             'transmisi' => 'required',
             'id_jenis_mobil' => 'required',
             'tanggal_beli' => 'required|date|date_format:Y-m-d',
@@ -266,7 +266,7 @@ class StokmobilController extends Controller
         $validator = Validator::make($request->all(), [
             'foto' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5000',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
