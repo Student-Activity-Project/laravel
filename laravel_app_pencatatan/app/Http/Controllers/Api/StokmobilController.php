@@ -4,6 +4,7 @@ namespace App\Http\Controllers\api;
 
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use App\Models\Stokmobil;
 use App\Models\Warna;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -30,6 +31,9 @@ class StokmobilController extends Controller
             $warna = Warna::find($data->id_warna_mobil)->nama;
             $merk = Jenis::find($data->id_jenis_mobil)->nama;
 
+            // Mengambil nama pengguna yang menjual
+            $userJual = $data->user_jual_id ? User::find($data->user_jual_id)->name : null;
+
             $listmobil[] = [
                 'user_id' => $data->user_id,
                 'id' => $data->id,
@@ -44,6 +48,9 @@ class StokmobilController extends Controller
                 'catatan_perbaikan' => $data->catatan_perbaikan,
                 'foto' => $fotoUrl,
                 'status' => $data->status,
+                'tanggal_jual' => $data->tanggal_jual, // Tambahkan tanggal_jual ke dalam array
+                'user_jual_id' => $data->user_jual_id, // Tambahkan user_jual_id ke dalam array
+                'user_jual' => $data->user_jual,
             ];
         }
 
@@ -65,6 +72,7 @@ class StokmobilController extends Controller
         'harga_jual' => 'required|numeric|min:0|max:100000000000|regex:/^\d+$/',
         'catatan_perbaikan' => 'required|max:200|regex:/^[a-zA-Z0-9\s]*$/',
         'foto' => 'required|file|image|max:5000',
+        'tanggal_jual' => 'nullable|date|date_format:Y-m-d',
     ]);
 
     // Check for validation errors
@@ -103,7 +111,16 @@ class StokmobilController extends Controller
     $listdata->fill($request->all());
     $listdata->foto = $nama_file; // Store the full URL of the photo
     $listdata->user_id = Auth::id();
+    $user = auth()->user();
+    $userJual = User::find($user->id);
+
     $listdata->status = 'available'; // Set the status to 'available' by default
+    if ($request->status === 'sold') {
+        $listdata->status = 'sold';
+        $listdata->tanggal_jual = $request->tanggal_jual ?? Carbon::now()->format('Y-m-d');
+        $listdata->user_jual_id = Auth::id(); // Set user_jual_id to current user
+        $listdata->user_jual;
+    }
     $listdata->save();
 
     // Check if data was saved successfully
@@ -143,6 +160,9 @@ class StokmobilController extends Controller
             $warna = Warna::find($data->id_warna_mobil)->nama;
             $merk = Jenis::find($data->id_jenis_mobil)->nama;
 
+            $user = auth()->user();
+            $userJual = User::find($user->id);
+
             $listmobil[] = [
                 'user_id' => $data->user_id,
                 'id' => $data->id,
@@ -157,6 +177,9 @@ class StokmobilController extends Controller
                 'catatan_perbaikan' => $data->catatan_perbaikan,
                 'foto' => $fotoUrl,
                 'status' => $data->status,
+                'tanggal_jual' => $data->tanggal_jual, // Tambahkan tanggal_jual ke dalam array
+                'user_jual_id' => $data->user_jual_id, // Tambahkan user_jual_id ke dalam array
+                'user_jual' => $data->user_jual,
             ];
         }
 
@@ -238,14 +261,21 @@ class StokmobilController extends Controller
     {
         try {
             $listdata = Stokmobil::findOrFail($id);
+            $user = auth()->user();
+            $userJual = User::find($user->id);
+            Log::info('Authenticated user: ', ['id' => $user->id, 'username' => $user->username]);
 
             $listdata->status = 'sold'; // Set status to "sold"
+            $listdata->tanggal_jual = Carbon::now()->format('Y-m-d');; // Set tanggal_jual to current date and time
+            $listdata->user_jual_id = auth()->user()->id; // Set user_jual_id to the current user's ID
+            $listdata->user_jual = $userJual->username;
             $listdata->save();
+
 
             return response()->json([
                 'status' => true,
                 'message' => 'Mobil Berhasil Dijual',
-                'data' => $listdata // Optional: Return the updated car data
+                'data' => $listdata,  // Optional: Return the updated car data
             ]);
 
         } catch (ModelNotFoundException $e) {

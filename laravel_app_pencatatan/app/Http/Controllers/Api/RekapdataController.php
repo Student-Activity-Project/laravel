@@ -40,8 +40,8 @@ class RekapdataController extends Controller
         $tanggalAkhir = $request->input('tanggal_akhir');
 
         try {
-            // Query untuk mendapatkan daftar data berdasarkan jangkauan tanggal
-            $transaksis = Stokmobil::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])->get();
+            // Query untuk mendapatkan daftar data berdasarkan jangkauan tanggal_jual
+            $transaksis = Stokmobil::whereBetween('tanggal_jual', [$tanggalAwal, $tanggalAkhir])->get();
 
             if ($transaksis->isEmpty()) {
                 return response()->json([
@@ -72,6 +72,9 @@ class RekapdataController extends Controller
                     'harga_jual' => $data->harga_jual,
                     'catatan_perbaikan' => $data->catatan_perbaikan,
                     'foto' => $fotoUrl, // Menambahkan URL foto ke respons
+                    'tanggal_jual' => $data->tanggal_jual,
+                    'user_jual_id' => $data->user_jual_id, // Tambahkan user_jual_id ke dalam array
+                    'user_jual' => $data->user_jual,
                 ];
             }
 
@@ -116,11 +119,11 @@ class RekapdataController extends Controller
         // Ambil nilai 'merk' dari permintaan
         $merk = $request->input('merk');
 
-        // Query untuk mendapatkan daftar data berdasarkan merek dan jangkauan tanggal
+        // Query untuk mendapatkan daftar data berdasarkan merek dan jangkauan tanggal_jual
         $transaksis = Stokmobil::whereHas('jenis', function ($query) use ($merk) {
             $query->where('nama', $merk);
         })
-        ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+        ->whereBetween('tanggal_jual', [$tanggalAwal, $tanggalAkhir])
         ->get();
 
         $listTransaksi = [];
@@ -143,6 +146,9 @@ class RekapdataController extends Controller
                 'harga_jual' => $data->harga_jual,
                 'catatan_perbaikan' => $data->catatan_perbaikan,
                 'foto' => $fotoUrl, // Menambahkan URL foto ke respons
+                'tanggal_jual' => $data->tanggal_jual,
+                'user_jual_id' => $data->user_jual_id, // Tambahkan user_jual_id ke dalam array
+                'user_jual' => $data->user_jual,
             ];
         }
 
@@ -199,9 +205,9 @@ class RekapdataController extends Controller
         // Ambil nilai 'transmisi' dari permintaan
         $transmisi = $request->input('transmisi');
 
-        // Query untuk mendapatkan daftar data berdasarkan transmisi dan jangkauan tanggal
+        // Query untuk mendapatkan daftar data berdasarkan transmisi dan jangkauan tanggal_jual
         $transaksis = Stokmobil::where('transmisi', $transmisi)
-        ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+        ->whereBetween('tanggal_jual', [$tanggalAwal, $tanggalAkhir])
         ->get();
 
         $listTransaksi = [];
@@ -224,6 +230,9 @@ class RekapdataController extends Controller
                 'harga_jual' => $data->harga_jual,
                 'catatan_perbaikan' => $data->catatan_perbaikan,
                 'foto' => $fotoUrl, // Menambahkan URL foto ke respons
+                'tanggal_jual' => $data->tanggal_jual,
+                'user_jual_id' => $data->user_jual_id, // Tambahkan user_jual_id ke dalam array
+                'user_jual' => $data->user_jual,
             ];
         }
 
@@ -280,9 +289,9 @@ class RekapdataController extends Controller
         // Ambil nilai 'tahun' dari permintaan
         $tahun = $request->input('tahun');
 
-        // Query untuk mendapatkan daftar data berdasarkan tahun mobil dan jangkauan tanggal
+        // Query untuk mendapatkan daftar data berdasarkan tahun mobil dan jangkauan tanggal_jual
         $transaksis = Stokmobil::where('tahun_mobil', $tahun)
-                                ->whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+                                ->whereBetween('tanggal_jual', [$tanggalAwal, $tanggalAkhir])
                                 ->get();
 
 
@@ -306,6 +315,9 @@ class RekapdataController extends Controller
                 'harga_jual' => $data->harga_jual,
                 'catatan_perbaikan' => $data->catatan_perbaikan,
                 'foto' => $fotoUrl, // Menambahkan URL foto ke respons
+                'tanggal_jual' => $data->tanggal_jual,
+                'user_jual_id' => $data->user_jual_id, // Tambahkan user_jual_id ke dalam array
+                'user_jual' => $data->user_jual,
             ];
         }
 

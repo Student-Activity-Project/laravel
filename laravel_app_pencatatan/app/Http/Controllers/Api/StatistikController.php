@@ -109,9 +109,9 @@ class StatistikController extends Controller
         $tanggalAkhir = $request->input('tanggal_akhir');
 
         // Query untuk menghitung total penjualan dan jumlah unit mobil terjual berdasarkan tanggal dan pengguna
-        $totalSales = Stokmobil::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+        $totalSales = Stokmobil::whereBetween('tanggal_jual', [$tanggalAwal, $tanggalAkhir])
                               ->where('status', 'sold')->sum('harga_jual');
-        $totalUnitSold = Stokmobil::whereBetween('tanggal_beli', [$tanggalAwal, $tanggalAkhir])
+        $totalUnitSold = Stokmobil::whereBetween('tanggal_jual', [$tanggalAwal, $tanggalAkhir])
                                  ->where('status', 'sold')->count();
 
         // Format total penjualan dengan tanda titik sebagai pemisah ribuan
